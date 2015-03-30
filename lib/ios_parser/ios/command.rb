@@ -7,18 +7,13 @@ module IOSParser
       include Queryable, Enumerable
       attr_accessor :args, :commands, :parent, :pos, :document
 
-      def initialize(opts = {})
-        defaults = {
-          args: [],
-          commands: [],
-          parent: nil,
-          pos: nil,
-          document: nil
-        }
-
-        defaults.keys.each do |key|
-          self.send(:"#{key}=", opts[key] || defaults[key])
-        end
+      def initialize(args: [], commands: [],
+                     parent: nil, pos: nil, document: nil)
+        @args = args
+        @commands = commands
+        @parent = parent
+        @pos = pos
+        @document = document
       end
 
       def name
@@ -94,4 +89,3 @@ module IOSParser
     end # class Command
   end # class IOS
 end # module IOSParser
-

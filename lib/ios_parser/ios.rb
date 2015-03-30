@@ -5,17 +5,10 @@ module IOSParser
   class IOS
     attr_accessor :lexer, :tokens, :source, :document
 
-    def initialize(opts = {})
-      defaults = { debug: false, parent: nil }
-
+    def initialize(parent: nil, lexer: IOSParser::Lexer.new)
       @document = Document.new(nil)
-      @debug  = opts[:debug]  || defaults[:debug]
-      @parent = opts[:parent] || defaults[:parent]
-      @lexer  = opts[:lexer]  || IOSParser::Lexer.new
-    end
-
-    def debug?
-      @debug
+      @parent = parent
+      @lexer  = lexer
     end
 
     def tokens
@@ -75,10 +68,6 @@ module IOSParser
       else
         []
       end
-    end
-
-    def dedent?
-      tokens.first == :DEDENT && tokens.shift
     end
   end
 end
