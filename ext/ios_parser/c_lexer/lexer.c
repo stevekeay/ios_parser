@@ -44,6 +44,7 @@ typedef struct LexInfo LexInfo;
 #define MAKE_TOKEN(LEX, TOK) rb_ary_new3(2, rb_int_new(LEX->token_start), TOK)
 #define ADD_TOKEN(LEX, TOK) rb_ary_push(LEX->tokens, MAKE_TOKEN(LEX, TOK))
 
+#define CMD_LEN(CMD) (sizeof(CMD) - 1)
 int is_certificate(LexInfo *lex) {
     VALUE indent_ary, indent, command_ary, command;
     int token_count, indent_pos, command_pos;
@@ -68,7 +69,7 @@ int is_certificate(LexInfo *lex) {
     if (TYPE(command) != T_STRING) { return 0; }
 
     StringValue(command);
-    if (RSTRING_LEN(command) != 11) { return 0; }
+    if (RSTRING_LEN(command) != CMD_LEN("certificate")) { return 0; }
     if (0 != strncmp(RSTRING_PTR(command), "certificate", 11)) { return 0; }
 
     return 1;
@@ -86,7 +87,7 @@ int is_banner(LexInfo *lex) {
     if (TYPE(banner) != T_STRING) { return 0; }
 
     StringValue(banner);
-    if (RSTRING_LEN(banner) != 6) { return 0; }
+    if (RSTRING_LEN(banner) != CMD_LEN("banner")) { return 0; }
     if (0 != strncmp(RSTRING_PTR(banner), "banner", 6)) { return 0; }
 
     return 1;
