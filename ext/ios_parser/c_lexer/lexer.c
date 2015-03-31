@@ -218,8 +218,6 @@ static void process_decimal(LexInfo *lex) {
         process_space(lex);
     } else if (IS_NEWLINE(c)) {
         process_newline(lex);
-    } else if (IS_WORD(c)) {
-        process_word(lex);
     }
 }
 
