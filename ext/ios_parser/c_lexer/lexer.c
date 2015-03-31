@@ -28,15 +28,16 @@ struct LexInfo {
 };
 typedef struct LexInfo LexInfo;
 
-#define IS_SPACE(C)   C == ' ' || C == '\t' || C == '\r'
-#define IS_NEWLINE(C) C == '\n'
-#define IS_COMMENT(C) C == '#' || C == '!'
-#define IS_DIGIT(C)   '0' <= C && C <= '9'
-#define IS_DOT(C)     C == '.'
-#define IS_DECIMAL(C) IS_DIGIT(C) || IS_DOT(C)
-#define IS_LETTER(C)  'a' <= C && C <= 'z' || 'A' <= C && C <= 'Z'
-#define IS_PUNCT(C)   strchr("-+$:/,()|*#=<>!\"\\&@;%~{}'\"?[]_^", C)
-#define IS_WORD(C)    IS_DECIMAL(C) || IS_LETTER(C) || IS_PUNCT(C)
+#define IS_SPACE(C)     C == ' ' || C == '\t' || C == '\r'
+#define IS_NEWLINE(C)   C == '\n'
+#define IS_COMMENT(C)   C == '#' || C == '!'
+#define IS_DIGIT(C)     '0' <= C && C <= '9'
+#define IS_DOT(C)       C == '.'
+#define IS_DECIMAL(C)   IS_DIGIT(C) || IS_DOT(C)
+#define IS_LETTER(C)    'a' <= C && C <= 'z' || 'A' <= C && C <= 'Z'
+#define IS_PUNCT(C)     strchr("-+$:/,()|*#=<>!\"\\&@;%~{}'\"?[]_^", C)
+#define IS_WORD(C)      IS_DECIMAL(C) || IS_LETTER(C) || IS_PUNCT(C)
+#define IS_LEAD_ZERO(C) C != '0'
 
 #define CURRENT_CHAR(LEX) LEX->text[LEX->pos]
 #define TOKEN_EMPTY(LEX) LEX->token_length <= 0
@@ -351,7 +352,7 @@ static void process_root(LexInfo *lex) {
         lex->token_state = LEX_STATE_COMMENT;
         process_comment(lex);
 
-    } else if (c != '0' && IS_DIGIT(c)) {
+    } else if (!(IS_LEAD_ZERO(c)) && IS_DIGIT(c)) {
         lex->token_state = LEX_STATE_INTEGER;
         process_integer(lex);
 
