@@ -189,8 +189,9 @@ static void process_comment(LexInfo *lex) {
     char c = CURRENT_CHAR(lex);
 
     if (IS_NEWLINE(c)) {
-        lex->token_length = 0;
         delimit(lex);
+        lex->token_state = LEX_STATE_INDENT;
+        lex->indent = 0;
     }
 }
 

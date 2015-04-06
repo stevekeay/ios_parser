@@ -55,6 +55,7 @@ module IOSParser
     end
 
     def comment
+      update_indentation
       self.state = :root if newline?
     end
 

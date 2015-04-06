@@ -49,6 +49,44 @@ END
         end
       end
 
+      context 'ASR indented regions' do
+        context 'indented region' do
+          let(:input) { <<-END }
+router static
+ vrf MGMT
+  address-family ipv4 unicast
+   0.0.0.0/0 1.2.3.4
+  !
+ !
+!
+router ospf 12345
+ nsr
+END
+
+          let(:expectation) do
+            ["router", "static", :EOL,
+             :INDENT, "vrf", "MGMT", :EOL,
+             :INDENT, "address-family", "ipv4", "unicast", :EOL,
+             :INDENT, "0.0.0.0/0", "1.2.3.4", :EOL,
+             :DEDENT, :DEDENT, :DEDENT,
+             "router", "ospf", 12345, :EOL,
+             :INDENT, "nsr", :EOL,
+             :DEDENT
+            ]
+          end
+
+          it 'pure' do
+            tokens = IOSParser::PureLexer.new.call(input)
+            expect(tokens.map(&:last)).to eq expectation
+          end # it 'pure' do
+
+          it 'c' do
+            tokens = IOSParser::CLexer.new.call(input)
+            expect(tokens.map(&:last)).to eq expectation
+          end # it 'c' do
+        end # context 'indented region' do
+      end # context 'ASR indented regions' do
+
       context 'banners' do
         let(:input) do
           <<-END
