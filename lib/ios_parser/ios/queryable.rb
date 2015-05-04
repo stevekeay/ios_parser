@@ -45,6 +45,7 @@ module IOSParser
             else fail("Invalid query: #{raw.inspect}")
             end
           end
+          alias_method :parent, :query_expression
 
           def query_expression_hash(raw)
             raw.each_pair { |pred, arg| raw[pred] &&= send(pred, arg) }
@@ -62,7 +63,6 @@ module IOSParser
             else fail("Invalid #{__method__} condition in query: #{expr}")
             end
           end
-
           alias_method :contains, :starts_with
           alias_method :ends_with, :starts_with
 
@@ -80,8 +80,6 @@ module IOSParser
             else fail("Invalid line condition in query: #{expr}")
             end
           end
-
-          alias_method :parent, :query_expression
 
           def array_wrap_and_map(expr)
             (expr.respond_to?(:map) ? expr : [expr])
