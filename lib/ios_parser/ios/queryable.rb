@@ -93,7 +93,9 @@ module IOSParser
           alias_method :not_all, :array_wrap_and_map
 
           def depth(expr)
-            unless expr.is_a?(Integer)
+            unless expr.is_a?(Integer) || (expr.is_a?(Range) &&
+                                           expr.first.is_a?(Integer) &&
+                                           expr.last.is_a?(Integer))
               fail("Invalid depth constraint in query: #{expr}")
             end
             expr
@@ -171,14 +173,29 @@ module IOSParser
           end
 
           def depth(expr, command)
+            case expr
+            when Integer then depth_exact(expr, command)
+            when Range   then depth_range(expr, command)
+            end
+          end
+
+          def depth_exact(expr, command)
+            _depth(expr, command) == expr
+          end
+
+          def depth_range(expr, command)
+            _depth(expr.last, command) > expr.first
+          end
+
+          def _depth(max, command)
             level = 0
             ptr = command
             while ptr.parent
               ptr = ptr.parent
               level += 1
-              return false if level > expr
+              return Float::MIN if level > max
             end
-            level == expr
+            level
           end
         end # class << self
       end # module Matcher
