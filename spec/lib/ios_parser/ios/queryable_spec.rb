@@ -101,6 +101,13 @@ END
           let(:matcher) { { depth: 3 } }
           it { should == expectation }
         end
+
+        context 'matcher: none' do
+          let(:matcher) do
+            { none: [/policy/, /class/, /police/] }
+          end
+          it { should == expectation }
+        end
       end # describe '#find' do
     end # describe Queryable
   end # class IOS

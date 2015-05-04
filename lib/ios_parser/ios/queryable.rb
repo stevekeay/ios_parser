@@ -97,6 +97,12 @@ module IOSParser
             expr.map { |e| query_expression(e) }
           end
 
+          def none(expr)
+            unless expr.is_a?(Array)
+              fail("Invalid negated disjunction in query: #{expr}")
+            end
+            expr.map { |e| query_expression(e) }
+          end
 
           def depth(expr)
             unless expr.is_a?(Integer)
@@ -166,6 +172,10 @@ module IOSParser
                 send(pred, arg, command)
               end
             end
+          end
+
+          def none(expressions, command)
+            !expressions.any? { |expr| all([expr], command) }
           end
 
           def depth(expr, command)
