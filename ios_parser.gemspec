@@ -5,7 +5,8 @@ Gem::Specification.new do |s|
   s.name        = "ios_parser"
   s.version     = IOSParser.version
   s.date        = "2014-08-29"
-  s.summary     = "convert network switch and router config files to structured data"
+  s.summary     = "convert network switch and router config files to "\
+                  "structured data"
   s.authors     = ["Ben Miller"]
   s.email       = "bmiller@rackspace.com"
   s.homepage    = "https://github.rackspace.com/bmiller/ios_parser"

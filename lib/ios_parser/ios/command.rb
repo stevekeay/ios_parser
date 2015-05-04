@@ -3,7 +3,6 @@ require_relative 'queryable'
 module IOSParser
   class IOS
     class Command
-
       include Queryable, Enumerable
       attr_accessor :args, :commands, :parent, :pos, :document
 
@@ -75,7 +74,7 @@ module IOSParser
           hash[:parent] = parent
           [:args, :commands, :pos].each do |key|
             val = hash.delete(key.to_s)
-            hash[key] = val unless hash.key?(key)
+            hash[key] ||= val
           end
 
           hash[:commands] ||= []
@@ -85,7 +84,6 @@ module IOSParser
           new(hash)
         end
       end
-
     end # class Command
   end # class IOS
 end # module IOSParser

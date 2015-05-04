@@ -6,5 +6,7 @@ group :development do
   gem 'rspec'
   gem 'guard'
   gem 'guard-rspec'
+  gem 'guard-bundler'
   gem 'rake-compiler'
+  gem 'guard-rubocop'
 end

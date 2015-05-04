@@ -4,7 +4,6 @@ require_relative 'command'
 module IOSParser
   class IOS
     class Document
-
       include Queryable, Enumerable
       attr_accessor :commands, :parent, :source
 
@@ -44,11 +43,10 @@ module IOSParser
           end
 
           new(source).tap do |doc|
-            doc.push(*(hash[:commands].map { |c| Command.from_hash(c) } ))
+            doc.push(*(hash[:commands].map { |c| Command.from_hash(c) }))
           end
         end
-      end
-
+      end # class << self
     end # class Document
   end # class IOS
 end # class IOSParser

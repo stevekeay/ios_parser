@@ -1,7 +1,6 @@
 module IOSParser
   class IOS
     module Queryable
-
       def find_all(expr, &blk)
         _find_all(MatcherReader.query_expression(expr), &blk)
       end
@@ -33,20 +32,21 @@ module IOSParser
 
       module MatcherReader
         class << self
-
           def query_expression(raw)
             case raw
-            when Hash
-              raw.keys.each do |key|
-                raw[key] &&= send(key, raw[key])
-              end
-              raw
-
+            when Hash          then query_expression_hash(raw)
             when Proc          then { procedure: procedure(raw) }
             when Regexp        then { line: line(raw) }
             when String, Array then { starts_with: starts_with(raw) }
             else fail("Invalid query: #{raw.inspect}")
             end
+          end
+
+          def query_expression_hash(raw)
+            raw.keys.each do |key|
+              raw[key] &&= send(key, raw[key])
+            end
+            raw
           end
 
           def name(expr)
@@ -82,62 +82,61 @@ module IOSParser
           alias_method :parent, :query_expression
 
           def any(expr)
-            unless expr.kind_of?(Array)
+            unless expr.is_a?(Array)
               fail("Invalid disjunction in query: #{expr}")
             end
             expr.map { |e| query_expression(e) }
           end
 
           def all(expr)
-            unless expr.kind_of?(Array)
+            unless expr.is_a?(Array)
               fail("Invalid conjunction in query: #{expr}")
             end
             expr.map { |e| query_expression(e) }
           end
 
+
           def depth(expr)
-            unless expr.kind_of?(Integer)
+            unless expr.is_a?(Integer)
               fail("Invalid depth constraint in query: #{expr}")
             end
             expr
           end
-
         end # class << self
       end # module MatcherReader
 
       module Matcher
         class << self
-
           def name(expr, command)
             expr === command.name
           end
 
           def starts_with(req_ary, command)
-            (0 .. req_ary.length - 1).all? do |i|
-              case req_ary[i]
-              when String then req_ary[i] == command.args[i].to_s
-              else             req_ary[i] === command.args[i]
-              end
+            (0..req_ary.length - 1).all? do |i|
+              compare_string_or_case(req_ary[i], command.args[i])
             end
           end
 
           def contains(req_ary, command)
-            (0 .. command.args.length - req_ary.length).any? do |j|
-              (0 .. req_ary.length - 1).all? do |i|
-                case req_ary[i]
-                when String then req_ary[i] == command.args[i+j].to_s
-                else             req_ary[i] === command.args[i+j]
-                end
+            (0..command.args.length - req_ary.length).any? do |j|
+              (0..req_ary.length - 1).all? do |i|
+                compare_string_or_case(req_ary[i], command.args[i + j])
               end
             end
           end
 
           def ends_with(req_ary, command)
-            (1 .. req_ary.length).all? do |i|
-              case req_ary[-i]
-              when String then req_ary[-i] == command.args[-i].to_s
-              else             req_ary[-i] === command.args[-i]
-              end
+            (1..req_ary.length).all? do |i|
+              compare_string_or_case(req_ary[-i], command.args[-1])
+            end
+          end
+
+          def compare_string_or_case(a, b)
+            case a
+            when String
+              a == b.to_s
+            else
+              a === b
             end
           end
 
@@ -181,11 +180,8 @@ module IOSParser
             end
             level == expr
           end
-
         end # class << self
       end # module Matcher
-
     end # module Queryable
   end # class IOS
 end # module IOSParser
-

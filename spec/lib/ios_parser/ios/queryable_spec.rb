@@ -4,7 +4,6 @@ require 'ios_parser'
 module IOSParser
   class IOS
     describe Queryable do
-
       let(:input) { <<-END }
 policy-map mypolicy_in
  class some_service
@@ -22,7 +21,6 @@ END
 
       describe '#find' do
         context 'shortcut matcher' do
-
           describe String do
             let(:matcher) { 'set dscp cs1' }
             it { should == expectation }
@@ -35,10 +33,10 @@ END
 
           describe Proc do
             let(:expectation) { 'command_with_no_args' }
-            let(:matcher) { ->(c){ c.args.count == 1 } }
+            let(:matcher) { ->(c) { c.args.count == 1 } }
             it { should == expectation }
           end
-        end
+        end # context 'shortcut matcher' do
 
         context 'explicit matcher form of shortcut matcher' do
           describe String do
@@ -53,10 +51,10 @@ END
 
           describe Proc do
             let(:expectation) { 'command_with_no_args' }
-            let(:matcher) { { procedure: ->(c){ c.args.count == 1 } } }
+            let(:matcher) { { procedure: ->(c) { c.args.count == 1 } } }
             it { should == expectation }
           end
-        end
+        end # context 'explicit matcher form of shortcut matcher' do
 
         context 'matcher: contains' do
           describe String do
@@ -68,7 +66,7 @@ END
             let(:matcher) { { contains: ['dscp', 'cs1'] } }
             it { should == expectation }
           end
-        end
+        end # context 'matcher: contains' do
 
         context 'matcher: ends_with' do
           let(:expectation) { 'class my_service' }
@@ -82,7 +80,7 @@ END
             let(:matcher) { { ends_with: ['my_service'] } }
             it { should == expectation }
           end
-        end
+        end # context 'matcher: ends_with' do
 
         context 'matcher: all' do
           let(:matcher) { { all: ['set', /cs1/] } }
@@ -103,8 +101,7 @@ END
           let(:matcher) { { depth: 3 } }
           it { should == expectation }
         end
-      end
-
+      end # describe '#find' do
     end # describe Queryable
   end # class IOS
 end # module IOSParser

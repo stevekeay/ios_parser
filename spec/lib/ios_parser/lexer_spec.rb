@@ -69,7 +69,7 @@ END
              :INDENT, "address-family", "ipv4", "unicast", :EOL,
              :INDENT, "0.0.0.0/0", "1.2.3.4", :EOL,
              :DEDENT, :DEDENT, :DEDENT,
-             "router", "ospf", 12345, :EOL,
+             "router", "ospf", 12_345, :EOL,
              :INDENT, "nsr", :EOL,
              :DEDENT
             ]

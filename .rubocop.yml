@@ -1,0 +1,19 @@
+AllCops:
+  Exclude:
+    - 'tmp/**/*'
+    - 'bin/**/*'
+
+Style/StringLiterals:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Style/CaseEquality:
+  Enabled: false
+
+Style/WordArray:
+  MinSize: 3
+
+Metrics/ClassLength:
+  Max: 212

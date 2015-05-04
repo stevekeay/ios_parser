@@ -17,13 +17,11 @@ module IOSParser
 
     def call(source)
       unless source.respond_to? :each_char
-        raise ArgumentError, "Provided configuration source is invalid."
+        fail ArgumentError, "Provided configuration source is invalid."
       end
       @source = source
       @document.source = source
-      until tokens.empty?
-        @document.push(*section)
-      end
+      @document.push(*section) until tokens.empty?
       @document
     end
 

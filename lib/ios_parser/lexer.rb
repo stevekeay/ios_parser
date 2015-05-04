@@ -28,24 +28,24 @@ module IOSParser
       tokens
     end
 
+    ROOT_TRANSITIONS = [
+      :space,
+      :banner_begin,
+      :certificate_begin,
+      :newline,
+      :comment,
+      :integer,
+      :word
+    ]
+
     def root
       @token_start ||= @this_char
 
-      case
-      when space?             then space
-      when banner_begin?      then transition(:banner_begin)
-      when certificate_begin? then certificate_begin
-      when newline?           then newline
-      when comment?           then transition(:comment)
-      when digit?             then transition(:integer)
-      when word?              then transition(:word)
-      else fail LexError, "Unknown character #{char.inspect}"
+      ROOT_TRANSITIONS.each do |meth|
+        return send(meth) if send(:"#{meth}?")
       end
-    end
 
-    def transition(new_state)
-      self.state = new_state
-      send new_state
+      fail LexError, "Unknown character #{char.inspect}"
     end
 
     def make_token(value, pos: nil)
@@ -55,6 +55,7 @@ module IOSParser
     end
 
     def comment
+      self.state = :comment
       update_indentation
       self.state = :root if newline?
     end
@@ -71,9 +72,7 @@ module IOSParser
     end
 
     def banner_begin?
-      tokens[-2] &&
-        tokens[-2].last.is_a?(String) &&
-        tokens[-2].last == 'banner'
+      tokens[-2] && tokens[-2].last == 'banner'
     end
 
     def banner
@@ -82,29 +81,31 @@ module IOSParser
 
     def banner_end
       self.state = :root
-      token.slice!(0) if token[0] == 'C'
-      token.slice!(0) if (token[0] == "\n" || token[0] == ' ')
-      token.slice!(-1) if token[1] == "\n"
+      banner_end_clean_token
       tokens << make_token(token) << make_token(:BANNER_END)
       self.token = ''
     end
 
+    def banner_end_clean_token
+      token.slice!(0) if token[0] == 'C'
+      token.slice!(0) if ["\n", " "].include?(token[0])
+      token.chomp!("\n")
+    end
+
     def scrub_banner_garbage
       tokens.each_index do |i|
-        next unless tokens[i+1]
-        if tokens[i].last == :BANNER_END && tokens[i+1].last == 'C'
-          tokens.slice!(i+1)
-        end
+        next unless tokens[i + 1]
+        tokens.slice!(i + 1) if banner_garbage?(i)
       end
     end
 
+    def banner_garbage?(i)
+      tokens[i].last == :BANNER_END && tokens[i + 1].last == 'C'
+    end
+
     def certificate_begin?
-      tokens[-6] &&
-        tokens[-6].last.is_a?(Symbol) &&
-        tokens[-6].last == :INDENT &&
-        tokens[-5] &&
-        tokens[-5].last.is_a?(String) &&
-        tokens[-5].last == 'certificate'
+      tokens[-6] && tokens[-6].last == :INDENT &&
+        tokens[-5] && tokens[-5].last == 'certificate'
     end
 
     def certificate_begin
@@ -138,10 +139,11 @@ module IOSParser
     end
 
     def integer
+      self.state = :integer
       case
-      when dot?   then transition(:decimal)
+      when dot?   then decimal
       when digit? then token << char
-      when word?  then transition(:word)
+      when word?  then word
       else root
       end
     end
@@ -160,10 +162,11 @@ module IOSParser
     end
 
     def decimal
+      self.state = :decimal
       case
       when digit? then token << char
       when dot?   then token << char
-      when word?  then transition(:word)
+      when word?  then word
       else root
       end
     end
@@ -178,6 +181,7 @@ module IOSParser
     end
 
     def word
+      self.state = :word
       word? ? token << char : root
     end
 
@@ -196,7 +200,7 @@ module IOSParser
 
     def space
       delimit
-      self.indent += 1 if (tokens.last && tokens.last.last == :EOL)
+      self.indent += 1 if tokens.last && tokens.last.last == :EOL
     end
 
     def space?
@@ -224,27 +228,28 @@ module IOSParser
     end
 
     def delimit
-      if !token.empty?
-        tokens << send(:"#{state}_token")
-        self.state = :root
-        self.token = ''
-      end
+      return if token.empty?
+      tokens << send(:"#{state}_token")
+      self.state = :root
+      self.token = ''
     end
 
     def update_indentation
-      while indent < indents.last
-        tokens << make_token(:DEDENT)
-        indents.pop
-      end
-
-      if indent > indents.last
-        tokens << make_token(:INDENT)
-        indents << indent
-      end
-
+      pop_dedent while indent < indents.last
+      push_indent if indent > indents.last
       self.indent = 0
     end
 
+    def pop_dedent
+      tokens << make_token(:DEDENT)
+      indents.pop
+    end
+
+    def push_indent
+      tokens << make_token(:INDENT)
+      indents.push(indent)
+    end
+
     class LexError < StandardError; end
-  end
-end
+  end # class PureLexer
+end # module IOSParser

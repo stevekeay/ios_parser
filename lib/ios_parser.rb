@@ -1,10 +1,14 @@
 module IOSParser
-  Lexer = if const_defined?(:PureLexer)
-            PureLexer
-          else
-            require_relative 'ios_parser/c_lexer'
-            CLexer
-          end
+  def self.lexer
+    if const_defined?(:PureLexer)
+      PureLexer
+    else
+      require_relative 'ios_parser/c_lexer'
+      CLexer
+    end
+  end
+
+  Lexer = lexer
 end
 
 require_relative 'ios_parser/ios'
