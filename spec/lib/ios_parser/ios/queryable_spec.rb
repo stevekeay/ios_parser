@@ -16,8 +16,8 @@ policy-map mypolicy_in
 END
 
       let(:expectation) { 'set dscp cs1' }
-
-      subject { IOSParser.parse(input).find(matcher).line }
+      let(:parsed) { IOSParser.parse(input) }
+      subject { parsed.find(matcher).line }
 
       describe '#find' do
         context 'shortcut matcher' do
@@ -105,6 +105,24 @@ END
         context 'matcher: none' do
           let(:matcher) do
             { none: [/policy/, /class/, /police/] }
+          end
+          it { should == expectation }
+        end
+
+        context 'matcher: not_all' do
+          let(:matcher)  do
+            {
+              all: [
+                { not_all: [/policy/] },
+                { not_all: [/class/]  },
+                { not_all: [/police/] }
+              ]
+            }
+          end
+
+          it do
+            expect(parsed.find(not_all: [/policy/, /class/]).line)
+              .to eq "policy-map mypolicy_in"
           end
           it { should == expectation }
         end

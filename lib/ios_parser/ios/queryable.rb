@@ -104,6 +104,13 @@ module IOSParser
             expr.map { |e| query_expression(e) }
           end
 
+          def not_all(expr)
+            unless expr.is_a?(Array)
+              fail("Invalid negated conjunction in query: #{expr}")
+            end
+            expr.map { |e| query_expression(e) }
+          end
+
           def depth(expr)
             unless expr.is_a?(Integer)
               fail("Invalid depth constraint in query: #{expr}")
@@ -172,6 +179,10 @@ module IOSParser
                 send(pred, arg, command)
               end
             end
+          end
+
+          def not_all(expressions, command)
+            !expressions.all? { |expr| all([expr], command) }
           end
 
           def none(expressions, command)
