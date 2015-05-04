@@ -12,7 +12,7 @@ module IOSParser
       def _find_all(expr, &blk)
         [].tap do |ret|
           commands.each do |command|
-            if expr.keys.all? { |key| Matcher.send(key, expr[key], command) }
+            if match_expr(expr, command)
               ret << command
               blk.call(command) if blk
             end
@@ -20,6 +20,10 @@ module IOSParser
             ret.push(*command._find_all(expr, &blk))
           end
         end
+      end
+
+      def match_expr(expr, command)
+        expr.each_pair.all? { |pred, arg| Matcher.send(pred, arg, command) }
       end
 
       def _find(expr, &blk)
@@ -43,9 +47,7 @@ module IOSParser
           end
 
           def query_expression_hash(raw)
-            raw.keys.each do |key|
-              raw[key] &&= send(key, raw[key])
-            end
+            raw.each_pair { |pred, arg| raw[pred] &&= send(pred, arg) }
             raw
           end
 
@@ -149,23 +151,19 @@ module IOSParser
           end
 
           def parent(expr, command)
-            expr.keys.all? do |key|
-              command.parent && send(key, expr[key], command.parent)
+            expr.each_pair.all? do |pred, arg|
+              command.parent && send(pred, arg, command.parent)
             end
           end
 
           def any(expressions, command)
-            expressions.any? do |expr|
-              expr.keys.all? do |key|
-                send(key, expr[key], command)
-              end
-            end
+            expressions.any? { |expr| all([expr], command) }
           end
 
           def all(expressions, command)
             expressions.all? do |expr|
-              expr.keys.all? do |key|
-                send(key, expr[key], command)
+              expr.each_pair.all? do |pred, arg|
+                send(pred, arg, command)
               end
             end
           end
