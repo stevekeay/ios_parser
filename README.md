@@ -47,6 +47,10 @@ Nesting Queries
     # => [{:interface=>"GigabitEthernet0/1", :speed=>1000},
     #     {:interface=>"GigabitEthernet0/2", :speed=>1000}]
 
+Compound Query Matchers
+-----------------------
+Matchers that combine other matchers (`any`, `all`, `none`, `not`, `not_all`) can accept the combined matchers as a single hash if they have different names, or an array of hashes if it is necessary to use the same matcher name with multiple arguments.
+
 Available Query Matchers
 ------------------------
 * `name` - matches the first argument of a command (e.g., `name: ip` will match `ip route` or `ip http server`)
@@ -57,7 +61,7 @@ Available Query Matchers
 * `parent` - matches commands by their parents (e.g., `parent: { starts_with: 'interface' }` will match the first level of subcommands of any interface section)
 * `any_child` - matches commands by their children (e.g., `any_child: { name: 'speed' }` will match any command that has a child command starting with `speed`)
 * `any` - matches commands that match any of an array of queries (e.g., `any: [{ starts_with: 'interface' }, { contains: 'ip route' }]` will match all interfaces and all static routes)
-* `all` - matches commands that match all of an array of queries (e.g., `all: ['interface', { line: /FastEthernet/ }]` will match all FastEthernet interfaces)
+* `all` - matches commands that match all of an array of queries (e.g., `all: { starts_with: 'interface', line: /FastEthernet/ }` will match all FastEthernet interfaces)
 * `none` - negation of `any`
 * `not_all` / `not` - negation of `all`
 * `depth` - matches based on how many command sections contain the command (e.g., `depth: 0` will only match top-level commands), accepts integers and integer ranges

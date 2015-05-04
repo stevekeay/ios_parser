@@ -112,11 +112,11 @@ END
         context 'matcher: not_all' do
           let(:matcher)  do
             {
-              all: [
-                { not_all: /policy/ },
-                { not: /class/  },
-                { not_all: /police/ }
-              ]
+              all: {
+                none: /policy/,
+                not: /class/,
+                not_all: /police/
+              }
             }
           end
 
