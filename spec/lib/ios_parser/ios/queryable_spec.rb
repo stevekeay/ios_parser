@@ -114,7 +114,7 @@ END
             {
               all: [
                 { not_all: /policy/ },
-                { not_all: /class/  },
+                { not: /class/  },
                 { not_all: /police/ }
               ]
             }

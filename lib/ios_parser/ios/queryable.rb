@@ -90,6 +90,7 @@ module IOSParser
           alias_method :any, :array_wrap_and_map
           alias_method :all, :array_wrap_and_map
           alias_method :none, :array_wrap_and_map
+          alias_method :not, :array_wrap_and_map
           alias_method :not_all, :array_wrap_and_map
 
           def depth(expr)
@@ -167,6 +168,7 @@ module IOSParser
           def not_all(expressions, command)
             !expressions.all? { |expr| all([expr], command) }
           end
+          alias_method :not, :not_all
 
           def none(expressions, command)
             !expressions.any? { |expr| all([expr], command) }
