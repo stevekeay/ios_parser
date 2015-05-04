@@ -46,6 +46,7 @@ module IOSParser
             end
           end
           alias_method :parent, :query_expression
+          alias_method :any_child, :query_expression
 
           def query_expression_hash(raw)
             raw.each_pair { |pred, arg| raw[pred] &&= send(pred, arg) }
@@ -149,6 +150,10 @@ module IOSParser
             expr.each_pair.all? do |pred, arg|
               command.parent && send(pred, arg, command.parent)
             end
+          end
+
+          def any_child(expr, command)
+            command.find(expr)
           end
 
           def any(expressions, command)

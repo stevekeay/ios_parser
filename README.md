@@ -55,6 +55,7 @@ Available Query Matchers
 * `ends_with` - matches the trailling arguments of a command
 * `line` - matches the string form of a command (all the arguments separated by single spaces)
 * `parent` - matches commands by their parents (e.g., `parent: { starts_with: 'interface' }` will match the first level of subcommands of any interface section)
+* `any_child` - matches commands by their children (e.g., `any_child: { name: 'speed' }` will match any command that has a child command starting with `speed`)
 * `any` - matches commands that match any of an array of queries (e.g., `any: [{ starts_with: 'interface' }, { contains: 'ip route' }]` will match all interfaces and all static routes)
 * `all` - matches commands that match all of an array of queries (e.g., `all: ['interface', { line: /FastEthernet/ }]` will match all FastEthernet interfaces)
 * `none` - negation of `any`

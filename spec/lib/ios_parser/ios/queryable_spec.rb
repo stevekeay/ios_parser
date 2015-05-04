@@ -126,6 +126,11 @@ END
           end
           it { should == expectation }
         end
+
+        context "matcher: any_child" do
+          let(:matcher) { { not: { any_child: /dscp/ } } }
+          it { should == expectation }
+        end
       end # describe '#find' do
     end # describe Queryable
   end # class IOS
