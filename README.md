@@ -57,4 +57,6 @@ Available Query Matchers
 * `parent` - matches commands by their parents (e.g., `parent: { starts_with: 'interface' }` will match the first level of subcommands of any interface section)
 * `any` - matches commands that match any of an array of queries (e.g., `any: [{ starts_with: 'interface' }, { contains: 'ip route' }]` will match all interfaces and all static routes)
 * `all` - matches commands that match all of an array of queries (e.g., `all: ['interface', { line: /FastEthernet/ }]` will match all FastEthernet interfaces)
-* `depth` - matches based on how many command sections contain the command (e.g., `depth: 0` will only match top-level commands)
+* `none` - negation of `any`
+* `not_all` / `not` - negation of `all`
+* `depth` - matches based on how many command sections contain the command (e.g., `depth: 0` will only match top-level commands), accepts integers and integer ranges
