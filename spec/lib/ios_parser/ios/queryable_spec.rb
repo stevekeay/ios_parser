@@ -113,9 +113,9 @@ END
           let(:matcher)  do
             {
               all: [
-                { not_all: [/policy/] },
-                { not_all: [/class/]  },
-                { not_all: [/police/] }
+                { not_all: /policy/ },
+                { not_all: /class/  },
+                { not_all: /police/ }
               ]
             }
           end

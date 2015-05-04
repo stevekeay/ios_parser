@@ -84,30 +84,22 @@ module IOSParser
           alias_method :parent, :query_expression
 
           def any(expr)
-            unless expr.is_a?(Array)
-              fail("Invalid disjunction in query: #{expr}")
-            end
+            expr = [expr] unless expr.respond_to?(:map)
             expr.map { |e| query_expression(e) }
           end
 
           def all(expr)
-            unless expr.is_a?(Array)
-              fail("Invalid conjunction in query: #{expr}")
-            end
+            expr = [expr] unless expr.respond_to?(:map)
             expr.map { |e| query_expression(e) }
           end
 
           def none(expr)
-            unless expr.is_a?(Array)
-              fail("Invalid negated disjunction in query: #{expr}")
-            end
+            expr = [expr] unless expr.respond_to?(:map)
             expr.map { |e| query_expression(e) }
           end
 
           def not_all(expr)
-            unless expr.is_a?(Array)
-              fail("Invalid negated conjunction in query: #{expr}")
-            end
+            expr = [expr] unless expr.respond_to?(:map)
             expr.map { |e| query_expression(e) }
           end
 
