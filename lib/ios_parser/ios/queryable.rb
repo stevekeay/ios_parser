@@ -82,7 +82,7 @@ module IOSParser
           end
 
           def array_wrap_and_map(expr)
-            (expr.respond_to?(:map) ? expr : [expr])
+            (expr.respond_to?(:map) && !expr.is_a?(Hash) ? expr : [expr])
               .map { |e| query_expression(e) }
           end
           alias_method :any, :array_wrap_and_map
