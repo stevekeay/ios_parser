@@ -97,6 +97,17 @@ END
           it { should == expectation }
         end
 
+        context 'matcher: any (with a hash)' do
+          let(:matcher) do
+            { any: { depth: 0, procedure: ->(c) { c.args.count == 1 } } }
+          end
+
+          it do
+            expect(parsed.find_all(matcher).map(&:line))
+              .to eq ['policy-map mypolicy_in', 'command_with_no_args']
+          end
+        end
+
         context 'matcher: depth' do
           let(:matcher) { { depth: 3 } }
           it { should == expectation }

@@ -162,7 +162,11 @@ module IOSParser
           end
 
           def any(expressions, command)
-            expressions.any? { |expr| all([expr], command) }
+            expressions.any? do |expr|
+              expr.each_pair.any? do |pred, arg|
+                send(pred, arg, command)
+              end
+            end
           end
 
           def all(expressions, command)
