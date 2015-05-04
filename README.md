@@ -49,14 +49,14 @@ Nesting Queries
 
 Compound Query Matchers
 -----------------------
-Compound matchers that combine or modify other matchers can accept the combined matchers as a single hash if they have different names, or an array of hashes if it is necessary to use the same matcher name with multiple arguments.
+Compound matchers combine or modify the meaning of other matchers. Their argument can be a single hash if all of the affected matchers have different names, and an array of hashes if it is necessary to use the same matcher name with multiple arguments.
 
 Available Compound Query Matchers
 ---------------------------------
 * `parent` - matches commands by their parents (e.g., `parent: { starts_with: 'interface' }` will match the first level of subcommands of any interface section)
 * `any_child` - matches commands that match at least one child command (e.g., `any_child: { name: 'speed' }` will match any command that has a child command starting with `speed`)
 * `no_child` - matches commands that do not match any child command (e.g., `no_child: { name: 'speed' }` will match commands that do not have a child command starting with `speed`)
-* `any` - matches commands that match any of an array of queries (e.g., `any: [{ starts_with: 'interface' }, { contains: 'ip route' }]` will match all interfaces and all static routes)
+* `any` - matches commands that match any of an array of queries (e.g., `any: [{ starts_with: 'interface' }, { starts_with: 'ip route' }]` will match all interfaces and all IOS-style static routes)
 * `all` - matches commands that match all of an array of queries (e.g., `all: { starts_with: 'interface', line: /FastEthernet/ }` will match all FastEthernet interfaces)
 * `none` - negation of `any`
 * `not_all` / `not` - negation of `all`
