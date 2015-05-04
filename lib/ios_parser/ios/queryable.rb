@@ -83,25 +83,14 @@ module IOSParser
 
           alias_method :parent, :query_expression
 
-          def any(expr)
-            expr = [expr] unless expr.respond_to?(:map)
-            expr.map { |e| query_expression(e) }
+          def array_wrap_and_map(expr)
+            (expr.respond_to?(:map) ? expr : [expr])
+              .map { |e| query_expression(e) }
           end
-
-          def all(expr)
-            expr = [expr] unless expr.respond_to?(:map)
-            expr.map { |e| query_expression(e) }
-          end
-
-          def none(expr)
-            expr = [expr] unless expr.respond_to?(:map)
-            expr.map { |e| query_expression(e) }
-          end
-
-          def not_all(expr)
-            expr = [expr] unless expr.respond_to?(:map)
-            expr.map { |e| query_expression(e) }
-          end
+          alias_method :any, :array_wrap_and_map
+          alias_method :all, :array_wrap_and_map
+          alias_method :none, :array_wrap_and_map
+          alias_method :not_all, :array_wrap_and_map
 
           def depth(expr)
             unless expr.is_a?(Integer)
