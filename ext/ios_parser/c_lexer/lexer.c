@@ -7,6 +7,7 @@ typedef enum lex_token_state {
     LEX_STATE_ROOT,
     LEX_STATE_INTEGER,
     LEX_STATE_DECIMAL,
+    LEX_STATE_QUOTED_STRING,
     LEX_STATE_WORD,
     LEX_STATE_COMMENT,
     LEX_STATE_BANNER,
@@ -25,6 +26,7 @@ struct LexInfo {
     int indent_pos;
     int indents[100];
     char banner_delimiter;
+    char string_terminator;
 };
 typedef struct LexInfo LexInfo;
 
@@ -38,6 +40,7 @@ typedef struct LexInfo LexInfo;
 #define IS_PUNCT(C)     strchr("-+$:/,()|*#=<>!\"\\&@;%~{}'\"?[]_^", C)
 #define IS_WORD(C)      IS_DECIMAL(C) || IS_LETTER(C) || IS_PUNCT(C)
 #define IS_LEAD_ZERO(C) C == '0'
+#define IS_QUOTE(C)     C == '"' || C == '\''
 
 #define CURRENT_CHAR(LEX) LEX->text[LEX->pos]
 #define TOKEN_EMPTY(LEX) LEX->token_length <= 0
@@ -104,6 +107,7 @@ static void delimit(LexInfo *lex) {
     }
 
     switch (lex->token_state) {
+    case (LEX_STATE_QUOTED_STRING):
     case (LEX_STATE_WORD):
     case (LEX_STATE_BANNER):
     case (LEX_STATE_CERTIFICATE):
@@ -192,6 +196,17 @@ static void process_comment(LexInfo *lex) {
         delimit(lex);
         lex->token_state = LEX_STATE_INDENT;
         lex->indent = 0;
+    }
+}
+
+static void process_quoted_string(LexInfo *lex) {
+    char c = CURRENT_CHAR(lex);
+    
+    lex->token_length++;
+    if (!lex->string_terminator) {
+        lex->string_terminator = c;
+    } else if (c == lex->string_terminator) {
+        delimit(lex);
     }
 }
 
@@ -355,6 +370,11 @@ static void process_root(LexInfo *lex) {
         lex->token_state = LEX_STATE_INTEGER;
         process_integer(lex);
 
+    } else if (IS_QUOTE(c)) {
+        lex->token_state = LEX_STATE_QUOTED_STRING;
+        lex->string_terminator = '\0';
+        process_quoted_string(lex);
+
     } else if (IS_WORD(c)) {
         lex->token_state = LEX_STATE_WORD;
         process_word(lex);
@@ -399,6 +419,10 @@ static VALUE call(VALUE self, VALUE input_text) {
             process_decimal(lex);
             break;
 
+        case (LEX_STATE_QUOTED_STRING):
+            process_quoted_string(lex);
+            break;
+            
         case (LEX_STATE_WORD):
             process_word(lex);
             break;

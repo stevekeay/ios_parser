@@ -1,6 +1,7 @@
 module IOSParser
   class PureLexer
-    attr_accessor :tokens, :token, :indents, :indent, :state, :char
+    attr_accessor :tokens, :token, :indents, :indent, :state, :char,
+                  :string_terminator
 
     def initialize
       @text    = ''
@@ -35,6 +36,7 @@ module IOSParser
       :newline,
       :comment,
       :integer,
+      :quoted_string,
       :word
     ]
 
@@ -205,6 +207,24 @@ module IOSParser
 
     def space?
       char == ' ' || char == "\t" || char == "\r"
+    end
+
+    def quoted_string
+      self.state = :quoted_string
+      token << char
+      if string_terminator.nil?
+        self.string_terminator = char
+      elsif char == string_terminator
+        delimit
+      end
+    end
+
+    def quoted_string_token
+      make_token(token)
+    end
+
+    def quoted_string?
+      char == '"' || char == "'"
     end
 
     def newline

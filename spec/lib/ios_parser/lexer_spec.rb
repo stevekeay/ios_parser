@@ -168,6 +168,29 @@ END
         subject { klass.new.call(input).map(&:last) }
         it('dropped') { should == output }
       end
+
+      context 'quoted octothorpe' do
+        let(:input) { <<-EOS }
+vlan 1
+ name "a #"
+vlan 2
+ name d
+      EOS
+
+        let(:output) do
+          [
+            'vlan', 1, :EOL,
+            :INDENT, 'name', '"a #"', :EOL,
+            :DEDENT,
+            'vlan', 2, :EOL,
+            :INDENT, 'name', 'd', :EOL,
+            :DEDENT
+          ]
+        end
+
+        it { expect(subject_pure.map(&:last)).to eq output }
+        it { expect(subject.map(&:last)).to eq output }
+      end # context 'quoted octothorpe' do
     end
   end
 end
