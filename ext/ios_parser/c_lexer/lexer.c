@@ -251,6 +251,7 @@ static void process_integer(LexInfo *lex) {
         process_newline(lex);
     } else if (IS_WORD(c)) {
         process_word(lex);
+        lex->token_state = LEX_STATE_WORD;
     }
 }
 

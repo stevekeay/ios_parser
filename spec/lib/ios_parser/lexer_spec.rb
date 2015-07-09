@@ -191,6 +191,20 @@ vlan 2
         it { expect(subject_pure.map(&:last)).to eq output }
         it { expect(subject.map(&:last)).to eq output }
       end # context 'quoted octothorpe' do
+
+      context 'vlan range' do
+        let(:input) { "switchport trunk allowed vlan 50-90" }
+        let(:output) do
+          [
+            [0, "switchport"],
+            [11, "trunk"],
+            [17, "allowed"],
+            [25, "vlan"],
+            [30, "50-90"]
+          ]
+        end
+        it { should == output }
+      end # context 'vlan range' do
     end
   end
 end
