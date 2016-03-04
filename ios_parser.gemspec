@@ -4,13 +4,12 @@ require 'ios_parser/version'
 Gem::Specification.new do |s|
   s.name        = 'ios_parser'
   s.version     = IOSParser.version
-  s.date        = "2014-08-29"
-  s.email       = "bmiller@rackspace.com"
-  s.license     = "MIT"
   s.summary     = 'convert network switch and router config files to '\
                   'structured data'
   s.authors     = ['Ben Miller']
+  s.email       = 'bjmllr@gmail.com'
   s.homepage    = 'https://github.com/bjmllr/ios_parser'
+  s.license     = 'GPL-3.0'
   s.files       = `git ls-files`.split("\n")
   s.test_files  = `git ls-files -- {spec,features}/*`.split("\n")
 
