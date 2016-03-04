@@ -255,7 +255,7 @@ module IOSParser
     end
 
     def update_indentation
-      pop_dedent while indent < indents.last
+      pop_dedent while 1 < indents.size && indent <= indents[-2]
       push_indent if indent > indents.last
       self.indent = 0
     end

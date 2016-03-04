@@ -55,5 +55,47 @@ END
         expect(subject.to_hash).to eq output
       end
     end # context 'indented region'
+
+    context "partial outdent" do
+      let(:input) do
+        <<END
+class-map match-any foobar
+  description blah blah blah
+ match access-group fred
+END
+      end
+
+      let(:output) do
+        {
+          commands:
+            [
+              {
+                args: ['class-map', 'match-any', 'foobar'],
+                commands: [
+                  {
+                    args: ['description', 'blah', 'blah', 'blah'],
+                    commands: [],
+                    pos: 29
+                  },
+                  {
+                    args: ['match', 'access-group', 'fred'],
+                    commands: [],
+                    pos: 57
+                  }
+                ],
+                pos: 0
+              }
+            ]
+        }
+      end
+
+      subject { described_class.parse(input) }
+
+      it "constructs the right AST" do
+        should be_a IOSParser::IOS::Document
+        actual = subject.to_hash
+        expect(actual).to eq(output)
+      end
+    end # context "partial outdent" do
   end # describe '.parse'
 end # describe IOSParser

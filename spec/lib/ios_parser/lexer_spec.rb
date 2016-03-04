@@ -205,6 +205,27 @@ vlan 2
         end
         it { should == output }
       end # context 'vlan range' do
+
+      context "partial dedent" do
+        let(:input) do
+          <<END
+class-map match-any foobar
+  description blahblahblah
+ match access-group fred
+END
+        end
+
+        let(:output) do
+          [
+            "class-map", "match-any", "foobar", :EOL,
+            :INDENT, "description", "blahblahblah", :EOL,
+            "match", "access-group", "fred", :EOL,
+            :DEDENT
+          ]
+        end
+
+        it { expect(subject_pure.map(&:last)).to eq output }
+      end
     end
   end
 end

@@ -332,7 +332,8 @@ static void process_start_of_line(LexInfo *lex) {
         lex->indent_pos++;
         lex->indents[lex->indent_pos] = lex->indent;
     } else {
-        while (lex->indent < lex->indents[lex->indent_pos]) {
+        while (lex->indent_pos >= 1 &&
+               lex->indent <= lex->indents[lex->indent_pos-1]) {
             ADD_TOKEN(lex, ID2SYM(rb_intern("DEDENT")));
             lex->indent_pos--;
         }
