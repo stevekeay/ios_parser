@@ -1,5 +1,4 @@
 require_relative 'ios/document'
-require 'multi_json'
 
 module IOSParser
   class IOS

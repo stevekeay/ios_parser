@@ -1,3 +1,5 @@
+require 'json'
+
 module IOSParser
   def self.lexer
     if const_defined?(:PureLexer)
@@ -24,7 +26,7 @@ module IOSParser
     end
 
     def json_to_ios(text)
-      hash_to_ios MultiJson.load(text)
+      hash_to_ios JSON.load(text)
     end
   end
 end

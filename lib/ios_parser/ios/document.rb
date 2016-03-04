@@ -1,3 +1,4 @@
+require 'json'
 require_relative 'queryable'
 require_relative 'command'
 
@@ -31,7 +32,7 @@ module IOSParser
       end
 
       def to_json
-        MultiJson.dump(to_hash)
+        JSON.dump(to_hash)
       end
 
       class << self
