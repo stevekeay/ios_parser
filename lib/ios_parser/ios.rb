@@ -17,7 +17,7 @@ module IOSParser
 
     def call(source)
       unless source.respond_to? :each_char
-        fail ArgumentError, "Provided configuration source is invalid."
+        raise ArgumentError, 'Provided configuration source is invalid.'
       end
       @source = source
       @document.source = source

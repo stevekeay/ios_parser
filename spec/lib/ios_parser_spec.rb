@@ -20,22 +20,22 @@ END
           commands:
             [{ args: ['policy-map', 'mypolicy_in'],
                commands:
-                 [{ args: ['class', 'myservice_service'],
+                 [{ args: %w(class myservice_service),
                     commands: [{ args: ['police', 300_000_000, 1_000_000,
                                         'exceed-action',
                                         'policed-dscp-transmit'],
-                                 commands: [{ args: ['set', 'dscp', 'cs1'],
+                                 commands: [{ args: %w(set dscp cs1),
                                               commands: [], pos: 114 }],
                                  pos: 50
                                }],
                     pos: 24
                   },
 
-                  { args: ['class', 'other_service'],
+                  { args: %w(class other_service),
                     commands: [{ args: ['police', 600_000_000, 1_000_000,
                                         'exceed-action',
                                         'policed-dscp-transmit'],
-                                 commands: [{ args: ['set', 'dscp', 'cs2'],
+                                 commands: [{ args: %w(set dscp cs2),
                                               commands: [], pos: 214 },
                                             { args: ['command_with_no_args'],
                                               commands: [], pos: 230 }],
@@ -56,7 +56,7 @@ END
       end
     end # context 'indented region'
 
-    context "partial outdent" do
+    context 'partial outdent' do
       let(:input) do
         <<END
 class-map match-any foobar
@@ -73,7 +73,7 @@ END
                 args: ['class-map', 'match-any', 'foobar'],
                 commands: [
                   {
-                    args: ['description', 'blah', 'blah', 'blah'],
+                    args: %w(description blah blah blah),
                     commands: [],
                     pos: 29
                   },
@@ -91,7 +91,7 @@ END
 
       subject { described_class.parse(input) }
 
-      it "constructs the right AST" do
+      it 'constructs the right AST' do
         should be_a IOSParser::IOS::Document
         actual = subject.to_hash
         expect(actual).to eq(output)

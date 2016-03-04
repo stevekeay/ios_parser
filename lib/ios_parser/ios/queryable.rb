@@ -14,7 +14,7 @@ module IOSParser
           commands.each do |command|
             if match_expr(expr, command)
               ret << command
-              blk.call(command) if blk
+              yield(command) if blk
             end
 
             ret.push(*command._find_all(expr, &blk))
@@ -28,7 +28,7 @@ module IOSParser
 
       def _find(expr, &blk)
         _find_all(expr) do |command|
-          blk.call(command) if blk
+          yield(command) if blk
           return command
         end
         nil
@@ -42,12 +42,12 @@ module IOSParser
             when Proc          then { procedure: procedure(raw) }
             when Regexp        then { line: line(raw) }
             when String, Array then { starts_with: starts_with(raw) }
-            else fail("Invalid query: #{raw.inspect}")
+            else raise("Invalid query: #{raw.inspect}")
             end
           end
-          alias_method :parent, :query_expression
-          alias_method :any_child, :query_expression
-          alias_method :no_child, :query_expression
+          alias parent query_expression
+          alias any_child query_expression
+          alias no_child query_expression
 
           def query_expression_hash(raw)
             raw.each_pair { |pred, arg| raw[pred] &&= send(pred, arg) }
@@ -62,15 +62,15 @@ module IOSParser
             case expr
             when String then expr.split
             when Array  then expr
-            else fail("Invalid #{__method__} condition in query: #{expr}")
+            else raise("Invalid #{__method__} condition in query: #{expr}")
             end
           end
-          alias_method :contains, :starts_with
-          alias_method :ends_with, :starts_with
+          alias contains starts_with
+          alias ends_with starts_with
 
           def procedure(expr)
             unless expr.respond_to?(:call)
-              fail("Invalid procedure in query: #{expr}")
+              raise("Invalid procedure in query: #{expr}")
             end
             expr
           end
@@ -79,7 +79,7 @@ module IOSParser
             case expr
             when String, Regexp then expr
             when Array          then expr.join(' ')
-            else fail("Invalid line condition in query: #{expr}")
+            else raise("Invalid line condition in query: #{expr}")
             end
           end
 
@@ -87,17 +87,17 @@ module IOSParser
             (expr.respond_to?(:map) && !expr.is_a?(Hash) ? expr : [expr])
               .map { |e| query_expression(e) }
           end
-          alias_method :any, :array_wrap_and_map
-          alias_method :all, :array_wrap_and_map
-          alias_method :none, :array_wrap_and_map
-          alias_method :not, :array_wrap_and_map
-          alias_method :not_all, :array_wrap_and_map
+          alias any array_wrap_and_map
+          alias all array_wrap_and_map
+          alias none array_wrap_and_map
+          alias not array_wrap_and_map
+          alias not_all array_wrap_and_map
 
           def depth(expr)
             unless expr.is_a?(Integer) || (expr.is_a?(Range) &&
                                            expr.first.is_a?(Integer) &&
                                            expr.last.is_a?(Integer))
-              fail("Invalid depth constraint in query: #{expr}")
+              raise("Invalid depth constraint in query: #{expr}")
             end
             expr
           end
@@ -180,7 +180,7 @@ module IOSParser
           def not_all(expressions, command)
             !expressions.all? { |expr| all([expr], command) }
           end
-          alias_method :not, :not_all
+          alias not not_all
 
           def none(expressions, command)
             !expressions.any? { |expr| all([expr], command) }

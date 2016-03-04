@@ -36,7 +36,7 @@ module IOSParser
       end
 
       def indentation(base: 0)
-        " " * (path.length - base)
+        ' ' * (path.length - base)
       end
 
       def each

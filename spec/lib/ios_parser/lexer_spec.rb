@@ -64,13 +64,13 @@ router ospf 12345
 END
 
           let(:expectation) do
-            ["router", "static", :EOL,
-             :INDENT, "vrf", "MGMT", :EOL,
-             :INDENT, "address-family", "ipv4", "unicast", :EOL,
-             :INDENT, "0.0.0.0/0", "1.2.3.4", :EOL,
+            ['router', 'static', :EOL,
+             :INDENT, 'vrf', 'MGMT', :EOL,
+             :INDENT, 'address-family', 'ipv4', 'unicast', :EOL,
+             :INDENT, '0.0.0.0/0', '1.2.3.4', :EOL,
              :DEDENT, :DEDENT, :DEDENT,
-             "router", "ospf", 12_345, :EOL,
-             :INDENT, "nsr", :EOL,
+             'router', 'ospf', 12_345, :EOL,
+             :INDENT, 'nsr', :EOL,
              :DEDENT
             ]
           end
@@ -193,20 +193,20 @@ vlan 2
       end # context 'quoted octothorpe' do
 
       context 'vlan range' do
-        let(:input) { "switchport trunk allowed vlan 50-90" }
+        let(:input) { 'switchport trunk allowed vlan 50-90' }
         let(:output) do
           [
-            [0, "switchport"],
-            [11, "trunk"],
-            [17, "allowed"],
-            [25, "vlan"],
-            [30, "50-90"]
+            [0, 'switchport'],
+            [11, 'trunk'],
+            [17, 'allowed'],
+            [25, 'vlan'],
+            [30, '50-90']
           ]
         end
         it { should == output }
       end # context 'vlan range' do
 
-      context "partial dedent" do
+      context 'partial dedent' do
         let(:input) do
           <<END
 class-map match-any foobar
@@ -217,9 +217,9 @@ END
 
         let(:output) do
           [
-            "class-map", "match-any", "foobar", :EOL,
-            :INDENT, "description", "blahblahblah", :EOL,
-            "match", "access-group", "fred", :EOL,
+            'class-map', 'match-any', 'foobar', :EOL,
+            :INDENT, 'description', 'blahblahblah', :EOL,
+            'match', 'access-group', 'fred', :EOL,
             :DEDENT
           ]
         end

@@ -21,22 +21,22 @@ END
           commands:
             [{ args: ['policy-map', 'mypolicy_in'],
                commands:
-                 [{ args: ['class', 'myservice_service'],
+                 [{ args: %w(class myservice_service),
                     commands: [{ args: ['police', 300_000_000, 1_000_000,
                                         'exceed-action',
                                         'policed-dscp-transmit'],
-                                 commands: [{ args: ['set', 'dscp', 'cs1'],
+                                 commands: [{ args: %w(set dscp cs1),
                                               commands: [], pos: 114 }],
                                  pos: 50
                                }],
                     pos: 24
                   },
 
-                  { args: ['class', 'other_service'],
+                  { args: %w(class other_service),
                     commands: [{ args: ['police', 600_000_000, 1_000_000,
                                         'exceed-action',
                                         'policed-dscp-transmit'],
-                                 commands: [{ args: ['set', 'dscp', 'cs2'],
+                                 commands: [{ args: %w(set dscp cs2),
                                               commands: [], pos: 214 },
                                             { args: ['command_with_no_args'],
                                               commands: [], pos: 230 }],
@@ -63,9 +63,9 @@ END
 
         it('can be searched by an exact command') do
           expect(subject.find_all(name: 'set').map(&:to_hash))
-            .to eq [{ args: ['set', 'dscp', 'cs1'],
+            .to eq [{ args: %w(set dscp cs1),
                       commands: [], pos: 114 },
-                    { args: ['set', 'dscp', 'cs2'],
+                    { args: %w(set dscp cs2),
                       commands: [], pos: 214 }]
         end
 
@@ -78,7 +78,7 @@ END
           let(:expectation) { [output[:commands][0][:commands][1]] }
 
           context 'with an array of strings' do
-            let(:starts_with) { ['class', 'other_service'] }
+            let(:starts_with) { %w(class other_service) }
             it { result }
           end
 
@@ -96,7 +96,7 @@ END
             let(:expectation) do
               [{ args: ['police', 300_000_000, 1_000_000, 'exceed-action',
                         'policed-dscp-transmit'],
-                 commands: [{ args: ['set', 'dscp', 'cs1'],
+                 commands: [{ args: %w(set dscp cs1),
                               commands: [], pos: 114 }],
                  pos: 50
                }]
@@ -120,7 +120,7 @@ END
                     .find('policy-map').find('class').find('police')
                     .find('set')
                     .to_hash)
-              .to eq(args: ['set', 'dscp', 'cs1'],
+              .to eq(args: %w(set dscp cs1),
                      commands: [], pos: 114)
           end
         end # context 'nested search'
@@ -129,7 +129,7 @@ END
           it 'is evaluated for each matching command' do
             ary = []
             subject.find_all('class') { |cmd| ary << cmd.args[1] }
-            expect(ary).to eq ['myservice_service', 'other_service']
+            expect(ary).to eq %w(myservice_service other_service)
           end
         end # context 'pass a block'
       end # end context 'indented region'
@@ -166,15 +166,15 @@ snmp-server group my_group v3 auth read my_ro
         end
 
         it('parses a simple alias') do
-          simple_alias = "alias exec stat sh int | inc [1-9].*ignored|[1-9].*"\
+          simple_alias = 'alias exec stat sh int | inc [1-9].*ignored|[1-9].*'\
                          "resets|Ethernet0|minute\n"
           result = klass.new.call(simple_alias)
           expect(result[0].name).to eq 'alias'
         end
 
         it('parses a complex alias') do
-          complex_alias = "alias exec stats sh int | inc Ether.*"\
-                          "\(con|Loop.*is up|Vlan.*is up|Port-.*is up|"\
+          complex_alias = 'alias exec stats sh int | inc Ether.*'\
+                          '(con|Loop.*is up|Vlan.*is up|Port-.*is up|'\
                           "input rate [^0]|output rate [^0]\n"
           result = klass.new.call(complex_alias)
           expect(result[0].name).to eq 'alias'
@@ -209,7 +209,7 @@ END
         end
 
         it('parses a crypto certificate section') do
-          sp = " "
+          sp = ' '
           text = <<END
 crypto pki certificate chain TP-self-signed-1234567890
  certificate self-signed 01
@@ -305,21 +305,21 @@ END
           actual_paths = subject.map(&:path)
           expected_paths = [
             [],
-            ["policy-map mypolicy_in"],
-            ["policy-map mypolicy_in",
-             "class myservice_service"],
-            ["policy-map mypolicy_in",
-             "class myservice_service",
-             "police 300000000 1000000 exceed-action policed-dscp-transmit"],
-            ["policy-map mypolicy_in"],
-            ["policy-map mypolicy_in",
-             "class other_service"],
-            ["policy-map mypolicy_in",
-             "class other_service",
-             "police 600000000 1000000 exceed-action policed-dscp-transmit"],
-            ["policy-map mypolicy_in",
-             "class other_service",
-             "police 600000000 1000000 exceed-action policed-dscp-transmit"]
+            ['policy-map mypolicy_in'],
+            ['policy-map mypolicy_in',
+             'class myservice_service'],
+            ['policy-map mypolicy_in',
+             'class myservice_service',
+             'police 300000000 1000000 exceed-action policed-dscp-transmit'],
+            ['policy-map mypolicy_in'],
+            ['policy-map mypolicy_in',
+             'class other_service'],
+            ['policy-map mypolicy_in',
+             'class other_service',
+             'police 600000000 1000000 exceed-action policed-dscp-transmit'],
+            ['policy-map mypolicy_in',
+             'class other_service',
+             'police 600000000 1000000 exceed-action policed-dscp-transmit']
           ]
           expect(actual_paths).to eq(expected_paths)
         end

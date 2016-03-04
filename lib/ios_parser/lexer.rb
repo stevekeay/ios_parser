@@ -38,7 +38,7 @@ module IOSParser
       :integer,
       :quoted_string,
       :word
-    ]
+    ].freeze
 
     def root
       @token_start ||= @this_char
@@ -47,7 +47,7 @@ module IOSParser
         return send(meth) if send(:"#{meth}?")
       end
 
-      fail LexError, "Unknown character #{char.inspect}"
+      raise LexError, "Unknown character #{char.inspect}"
     end
 
     def make_token(value, pos: nil)
@@ -90,7 +90,7 @@ module IOSParser
 
     def banner_end_clean_token
       token.slice!(0) if token[0] == 'C'
-      token.slice!(0) if ["\n", " "].include?(token[0])
+      token.slice!(0) if ["\n", ' '].include?(token[0])
       token.chomp!("\n")
     end
 
@@ -157,7 +157,7 @@ module IOSParser
     def digit?
       ('0'..'9').cover? char
     end
-    alias_method :integer?, :digit?
+    alias integer? digit?
 
     def dot?
       char == '.'
@@ -174,8 +174,11 @@ module IOSParser
     end
 
     def decimal_token
-      (token.count('.') > 1 || token[-1] == '.') ? word_token :
+      if token.count('.') > 1 || token[-1] == '.'
+        word_token
+      else
         make_token(Float(token))
+      end
     end
 
     def decimal?

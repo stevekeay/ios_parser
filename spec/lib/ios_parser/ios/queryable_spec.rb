@@ -63,7 +63,7 @@ END
           end
 
           describe Array do
-            let(:matcher) { { contains: ['dscp', 'cs1'] } }
+            let(:matcher) { { contains: %w(dscp cs1) } }
             it { should == expectation }
           end
         end # context 'matcher: contains' do
@@ -133,17 +133,17 @@ END
 
           it do
             expect(parsed.find(not_all: [/policy/, /class/]).line)
-              .to eq "policy-map mypolicy_in"
+              .to eq 'policy-map mypolicy_in'
           end
           it { should == expectation }
         end
 
-        context "matcher: any_child" do
+        context 'matcher: any_child' do
           let(:matcher) { { not: { any_child: /dscp/ } } }
           it { should == expectation }
         end
 
-        context "matcher: no_child" do
+        context 'matcher: no_child' do
           let(:matcher) { { no_child: /dscp/ } }
           it { should == expectation }
         end
