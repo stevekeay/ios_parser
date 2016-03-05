@@ -15,7 +15,6 @@ Gem::Specification.new do |s|
 
   s.extensions << 'ext/ios_parser/c_lexer/extconf.rb'
 
-  s.add_development_dependency 'bundler', '~>1.8'
   s.add_development_dependency 'rspec', '~>3.2'
   s.add_development_dependency 'rubocop', '~>0.37'
   s.add_development_dependency 'guard', '~>2.0'
