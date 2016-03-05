@@ -1,6 +1,9 @@
 ios_parser
 ==========
 
+[![Gem Version](https://badge.fury.io/rb/ios_parser.svg)](https://rubygems.org/gems/ios_parser)
+[![Build Status](https://travis-ci.org/bjmllr/ios_parser.svg)](https://travis-ci.org/bjmllr/ios_parser)
+
 convert switch and router config files to structured data
 
 Basic Parsing
