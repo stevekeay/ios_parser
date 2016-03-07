@@ -226,6 +226,30 @@ END
 
         it { expect(subject_pure.map(&:last)).to eq output }
       end
+
+      context '# in the middle of a line is not a comment' do
+        let(:input) { "vlan 1\n name #31337" }
+        let(:output) { ['vlan', 1, :EOL, :INDENT, 'name', '#31337', :DEDENT] }
+
+        it { expect(subject_pure.map(&:last)).to eq output }
+        it { expect(subject.map(&:last)).to eq output }
+      end
+
+      context '# at the start of a line is a comment' do
+        let(:input) { "vlan 1\n# comment\nvlan 2" }
+        let(:output) { ['vlan', 1, :EOL, 'vlan', 2] }
+
+        it { expect(subject_pure.map(&:last)).to eq output }
+        it { expect(subject.map(&:last)).to eq output }
+      end
+
+      context '# after indentation is a comment' do
+        let(:input) { "vlan 1\n # comment\nvlan 2" }
+        let(:output) { ['vlan', 1, :EOL, :INDENT, :DEDENT, 'vlan', 2] }
+
+        it { expect(subject_pure.map(&:last)).to eq output }
+        it { expect(subject.map(&:last)).to eq output }
+      end
     end
   end
 end

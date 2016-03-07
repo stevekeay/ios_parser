@@ -50,6 +50,14 @@ module IOSParser
       raise LexError, "Unknown character #{char.inspect}"
     end
 
+    def root_line_start
+      if lead_comment?
+        comment
+      else
+        root
+      end
+    end
+
     def make_token(value, pos: nil)
       pos ||= @token_start || @this_char
       @token_start = nil
@@ -63,6 +71,10 @@ module IOSParser
     end
 
     def comment?
+      char == '!'
+    end
+
+    def lead_comment?
       char == '#' || char == '!'
     end
 
@@ -246,7 +258,7 @@ module IOSParser
         self.indent += 1
       else
         update_indentation
-        root
+        root_line_start
       end
     end
 

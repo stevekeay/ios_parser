@@ -32,7 +32,7 @@ typedef struct LexInfo LexInfo;
 
 #define IS_SPACE(C)     C == ' ' || C == '\t' || C == '\r'
 #define IS_NEWLINE(C)   C == '\n'
-#define IS_COMMENT(C)   C == '#' || C == '!'
+#define IS_COMMENT(C)   C == '!'
 #define IS_DIGIT(C)     '0' <= C && C <= '9'
 #define IS_DOT(C)       C == '.'
 #define IS_DECIMAL(C)   IS_DIGIT(C) || IS_DOT(C)
@@ -41,6 +41,7 @@ typedef struct LexInfo LexInfo;
 #define IS_WORD(C)      IS_DECIMAL(C) || IS_LETTER(C) || IS_PUNCT(C)
 #define IS_LEAD_ZERO(C) C == '0'
 #define IS_QUOTE(C)     C == '"' || C == '\''
+#define IS_LEAD_COMMENT(C) C == '#' || C == '!'
 
 #define CURRENT_CHAR(LEX) LEX->text[LEX->pos]
 #define TOKEN_EMPTY(LEX) LEX->token_length <= 0
@@ -339,7 +340,11 @@ static void process_start_of_line(LexInfo *lex) {
         }
     }
 
-    process_root(lex);
+    if (IS_LEAD_COMMENT(c)) {
+        lex->token_state = LEX_STATE_COMMENT;
+    } else {
+        process_root(lex);
+    }
 }
 
 static void process_root(LexInfo *lex) {
