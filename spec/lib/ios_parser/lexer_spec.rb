@@ -111,6 +111,20 @@ END
         end
       end
 
+      context 'complex banner' do
+        let(:input) do
+          text_fixture('complex_banner')
+        end
+
+        let(:output) do
+          content = text_fixture('complex_banner').lines[1..-2].join
+          ['banner', 'exec', :BANNER_BEGIN, content, :BANNER_END, :EOL]
+        end
+
+        it { expect(subject.map(&:last)).to eq output }
+        it { expect(subject_pure.map(&:last)).to eq output }
+      end
+
       context 'decimal number' do
         let(:input) { 'boson levels at 93.2' }
         let(:output) { ['boson', 'levels', 'at', 93.2] }

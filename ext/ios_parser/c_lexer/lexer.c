@@ -303,7 +303,9 @@ static void start_certificate(LexInfo *lex) {
 static void process_banner(LexInfo *lex) {
     char c = CURRENT_CHAR(lex);
 
-    if (c == lex->banner_delimiter) {
+    if (c == lex->banner_delimiter &&
+        (0 < lex->pos && '\n' == lex->text[lex->pos - 1] ||
+         '\n' == lex->text[lex->pos + 1])) {
         lex->token_length++;
         delimit(lex);
         lex->token_start = lex->pos;

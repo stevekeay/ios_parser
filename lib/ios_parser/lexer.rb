@@ -15,7 +15,7 @@ module IOSParser
     end
 
     def call(input_text)
-      initialize
+      @text = input_text
 
       input_text.each_char.with_index do |c, i|
         @this_char = i
@@ -90,7 +90,12 @@ module IOSParser
     end
 
     def banner
-      char == @banner_delimiter ? banner_end : token << char
+      if char == @banner_delimiter && (@text[@this_char - 1] == "\n" ||
+                                       @text[@this_char + 1] == "\n")
+        banner_end
+      else
+        token << char
+      end
     end
 
     def banner_end
