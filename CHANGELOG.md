@@ -1,14 +1,10 @@
-## 0.1.1 (2015-03-05)
-Bugfixes:
-
-- Parser throws `ArgumentError` when input is not a string - [PR#1](https://github.rackspace.com/backbone/ios_parser/pull/1)
-
-## 0.1.0 (2015-02-17)
+## 0.3.1 (2016-03-07)
 
 Bugfixes:
 
-- `Document#each` and `Command#each` will visit all nodes
+- allow banners to contain the terminating character under some circumstances
+- process `#` as a comment-leader only if no non-whitespace character precedes it
 
-Features:
+## 0.3.0 (2016-03-04)
 
-- `Command#path` provides nested context
+- Initial public release
