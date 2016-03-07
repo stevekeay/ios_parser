@@ -37,7 +37,7 @@ typedef struct LexInfo LexInfo;
 #define IS_DOT(C)       C == '.'
 #define IS_DECIMAL(C)   IS_DIGIT(C) || IS_DOT(C)
 #define IS_LETTER(C)    'a' <= C && C <= 'z' || 'A' <= C && C <= 'Z'
-#define IS_PUNCT(C)     strchr("-+$:/,()|*#=<>!\"\\&@;%~{}'\"?[]_^", C)
+#define IS_PUNCT(C)     strchr("-+$:/,()|*#=<>!\"\\&@;%~{}'\"?[]_^`", C)
 #define IS_WORD(C)      IS_DECIMAL(C) || IS_LETTER(C) || IS_PUNCT(C)
 #define IS_LEAD_ZERO(C) C == '0'
 #define IS_QUOTE(C)     C == '"' || C == '\''
