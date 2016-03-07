@@ -103,7 +103,6 @@ module IOSParser
     def banner_end_clean_token
       token.slice!(0) if token[0] == 'C'
       token.slice!(0) if ["\n", ' '].include?(token[0])
-      token.chomp!("\n")
     end
 
     def scrub_banner_garbage

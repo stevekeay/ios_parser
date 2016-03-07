@@ -317,6 +317,7 @@ static void process_banner(LexInfo *lex) {
 static void start_banner(LexInfo *lex) {
     lex->banner_delimiter = CURRENT_CHAR(lex);
     ADD_TOKEN(lex, ID2SYM(rb_intern("BANNER_BEGIN")));
+    if ('\n' == lex->text[lex->pos + 2]) lex->pos++;
 }
 
 static void process_start_of_line(LexInfo *lex) {

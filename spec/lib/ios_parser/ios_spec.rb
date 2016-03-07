@@ -190,10 +190,14 @@ sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
 
 
 END
-          banner_command = "banner exec ^C#{banner_text}^C\n"
+          banner_command = "banner exec ^C\n#{banner_text}^C\n"
 
           result = klass.new.call(banner_command)
           expect(result[0].args[2]).to eq banner_text
+
+          pure_result = klass.new(lexer: IOSParser::PureLexer.new)
+                             .call(banner_command)
+          expect(pure_result[0].args[2]).to eq banner_text
         end
 
         it('parses a crypto trustpoint section') do
