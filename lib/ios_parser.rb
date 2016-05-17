@@ -11,6 +11,7 @@ module IOSParser
   end
 
   Lexer = lexer
+  class LexError < StandardError; end
 end
 
 require_relative 'ios_parser/ios'

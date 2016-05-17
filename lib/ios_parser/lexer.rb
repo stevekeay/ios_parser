@@ -1,5 +1,7 @@
 module IOSParser
   class PureLexer
+    LexError = IOSParser::LexError
+
     attr_accessor :tokens, :token, :indents, :indent, :state, :char,
                   :string_terminator
 
@@ -289,6 +291,5 @@ module IOSParser
       indents.push(indent)
     end
 
-    class LexError < StandardError; end
   end # class PureLexer
 end # module IOSParser
