@@ -1,3 +1,9 @@
+## 0.3.2 (2016-05-17)
+
+Bugfixes:
+
+- raise parse error for unterminated quoted string
+
 ## 0.3.1 (2016-03-07)
 
 Bugfixes:
