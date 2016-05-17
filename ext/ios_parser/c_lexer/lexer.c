@@ -2,6 +2,7 @@
 
 static VALUE rb_mIOSParser;
 static VALUE rb_cCLexer;
+VALUE rb_eLexError;
 
 typedef enum lex_token_state {
     LEX_STATE_ROOT,
@@ -451,6 +452,13 @@ static VALUE call(VALUE self, VALUE input_text) {
         }
     }
 
+    if (lex->token_state == LEX_STATE_QUOTED_STRING) {
+        rb_raise(rb_eLexError,
+                 "Unterminated quoted string starting at %d: %.*s",
+                 (int)lex->token_start,
+                 (int)lex->token_length, &lex->text[lex->token_start]);
+    }
+
     delimit(lex);
     lex->token_start = lex->pos;
 
@@ -464,6 +472,8 @@ static VALUE call(VALUE self, VALUE input_text) {
 void Init_c_lexer() {
     rb_mIOSParser = rb_define_module("IOSParser");
     rb_cCLexer = rb_define_class_under(rb_mIOSParser, "CLexer", rb_cObject);
+    rb_eLexError = rb_define_class_under(rb_mIOSParser, "LexError",
+                                         rb_eStandardError);
     rb_define_alloc_func(rb_cCLexer, allocate);
     rb_define_method(rb_cCLexer, "initialize", initialize, 0);
     rb_define_method(rb_cCLexer, "call", call, 1);

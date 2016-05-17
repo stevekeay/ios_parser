@@ -25,10 +25,7 @@ module IOSParser
         send(state)
       end
 
-      delimit
-      update_indentation
-      scrub_banner_garbage
-      tokens
+      finalize
     end
 
     ROOT_TRANSITIONS = [
@@ -291,5 +288,17 @@ module IOSParser
       indents.push(indent)
     end
 
+    def finalize
+      if state == :quoted_string
+        pos = @text.rindex(string_terminator)
+        raise LexError, "Unterminated quoted string starting at #{pos}: "\
+                        "#{@text[pos..pos + 20]}"
+      end
+
+      delimit
+      update_indentation
+      scrub_banner_garbage
+      tokens
+    end
   end # class PureLexer
 end # module IOSParser

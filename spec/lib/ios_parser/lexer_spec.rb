@@ -264,6 +264,18 @@ END
         it { expect(subject_pure.map(&:last)).to eq output }
         it { expect(subject.map(&:last)).to eq output }
       end
+
+      context 'unterminated quoted string' do
+        let(:input) { '"asdf' }
+        it 'raises a lex error' do
+          expect { subject_pure }.to raise_error IOSParser::LexError
+          expect { subject }.to raise_error IOSParser::LexError
+
+          pattern = /Unterminated quoted string starting at 0: #{input}/
+          expect { subject_pure }.to raise_error(pattern)
+          expect { subject }.to raise_error(pattern)
+        end
+      end
     end
   end
 end
