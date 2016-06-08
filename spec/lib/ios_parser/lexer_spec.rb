@@ -80,8 +80,8 @@ END
             expect(tokens.map(&:last)).to eq expectation
           end # it 'pure' do
 
-          it 'c' do
-            tokens = IOSParser::CLexer.new.call(input)
+          it 'default' do
+            tokens = IOSParser.lexer.new.call(input)
             expect(tokens.map(&:last)).to eq expectation
           end # it 'c' do
         end # context 'indented region' do
