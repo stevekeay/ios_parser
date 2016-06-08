@@ -13,4 +13,8 @@ Rake::ExtensionTask.new do |ext|
   ext.gem_spec = spec
 end
 
-task default: [:compile, :spec]
+if RUBY_ENGINE == 'jruby'
+  task default: :spec
+else
+  task default: [:compile, :spec]
+end
