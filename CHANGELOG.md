@@ -1,3 +1,10 @@
+## 0.4.0 (2016-06-08)
+
+Enhancements:
+
+- add support for JRuby (in 2.0 compatability mode)
+
+
 ## 0.3.3 (2016-05-17)
 
 Bugfixes:
