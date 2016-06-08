@@ -13,7 +13,9 @@ Gem::Specification.new do |s|
   s.files       = `git ls-files`.split("\n")
   s.test_files  = `git ls-files -- {spec,features}/*`.split("\n")
 
-  s.extensions << 'ext/ios_parser/c_lexer/extconf.rb'
+  unless RUBY_ENGINE == 'jruby'
+    s.extensions << 'ext/ios_parser/c_lexer/extconf.rb'
+  end
 
   s.add_development_dependency 'rspec', '~>3.2'
   s.add_development_dependency 'rubocop', '~>0.37'

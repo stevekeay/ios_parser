@@ -1,6 +1,8 @@
 require 'json'
 
 module IOSParser
+  class LexError < StandardError; end
+
   def self.lexer
     if const_defined?(:PureLexer)
       PureLexer
@@ -8,10 +10,12 @@ module IOSParser
       require_relative 'ios_parser/c_lexer'
       CLexer
     end
+  rescue LoadError
+    require 'ios_parser/lexer'
+    return PureLexer
   end
 
   Lexer = lexer
-  class LexError < StandardError; end
 end
 
 require_relative 'ios_parser/ios'
