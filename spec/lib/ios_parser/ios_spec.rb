@@ -27,10 +27,8 @@ END
                                         'policed-dscp-transmit'],
                                  commands: [{ args: %w(set dscp cs1),
                                               commands: [], pos: 114 }],
-                                 pos: 50
-                               }],
-                    pos: 24
-                  },
+                                 pos: 50 }],
+                    pos: 24 },
 
                   { args: %w(class other_service),
                     commands: [{ args: ['police', 600_000_000, 1_000_000,
@@ -40,12 +38,9 @@ END
                                               commands: [], pos: 214 },
                                             { args: ['command_with_no_args'],
                                               commands: [], pos: 230 }],
-                                 pos: 150
-                               }],
-                    pos: 128
-                  }],
-               pos: 0
-             }]
+                                 pos: 150 }],
+                    pos: 128 }],
+               pos: 0 }]
         }
       end
 
@@ -98,8 +93,7 @@ END
                         'policed-dscp-transmit'],
                  commands: [{ args: %w(set dscp cs1),
                               commands: [], pos: 114 }],
-                 pos: 50
-               }]
+                 pos: 50 }]
             end
 
             context 'integer query' do

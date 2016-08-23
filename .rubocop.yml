@@ -17,3 +17,6 @@ Metrics/ClassLength:
 Metrics/ModuleLength:
   Exclude:
     - 'spec/**/*'
+
+Performance/PushSplat:
+  Enabled: false

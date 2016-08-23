@@ -18,6 +18,6 @@ Gem::Specification.new do |s|
   end
 
   s.add_development_dependency 'rspec', '~>3.2'
-  s.add_development_dependency 'rubocop', '~>0.37'
+  s.add_development_dependency 'rubocop', '~>0.42'
   s.add_development_dependency 'rake-compiler', '~>0.9'
 end
