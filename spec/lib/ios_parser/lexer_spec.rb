@@ -4,8 +4,17 @@ require 'ios_parser/lexer'
 
 module IOSParser
   describe Lexer do
+    it 'should load the appropriate constants' do
+      [
+        FFILexer,
+        PureLexer
+      ]
+    end
+
     describe '#call' do
-      subject { klass.new.call(input) }
+      subject do
+        IOSParser::FFILexer.new.call(input)
+      end
 
       let(:subject_pure) do
         IOSParser::PureLexer.new.call(input)
@@ -40,11 +49,38 @@ END
            'set', 'dscp', 'cs2', :EOL, :DEDENT, :DEDENT, :DEDENT]
         end
 
-        subject { klass.new.call(input).map(&:last) }
+        subject { FFILexer.new.call(input).map(&:last) }
         it('enclosed in symbols') { should == output }
 
         it('enclosed in symbols (using the pure ruby lexer)') do
           expect(subject_pure.map(&:last)).to eq output
+        end
+      end
+
+      context 'simple indented region' do
+        let(:input) { <<-END }
+zero
+ one
+  two
+ one
+END
+
+        let(:expected) do
+          [
+            'zero', :EOL,
+            :INDENT, 'one', :EOL,
+            :INDENT, 'two', :EOL,
+            :DEDENT, 'one', :EOL,
+            :DEDENT
+          ]
+        end
+
+        subject { FFILexer.new.call(input).map(&:last) }
+        it('indents and dedents') { should == expected }
+
+        context 'using the pure ruby lexer' do
+          subject { PureLexer.new.call(input).map(&:last) }
+          it('indents and dedents') { should == expected }
         end
       end
 
@@ -126,7 +162,7 @@ END
       context 'decimal number' do
         let(:input) { 'boson levels at 93.2' }
         let(:output) { ['boson', 'levels', 'at', 93.2] }
-        subject { klass.new.call(input).map(&:last) }
+        subject { FFILexer.new.call(input).map(&:last) }
         it('converts to Float') { should == output }
       end
 
@@ -165,7 +201,7 @@ END
            [323, :DEDENT]]
         end
 
-        subject { klass.new.call(input) }
+        subject { FFILexer.new.call(input) }
         it('tokenized') { expect(subject).to eq output }
 
         it('tokenized (using the pure ruby lexer)') do
@@ -176,7 +212,7 @@ END
       context 'comments' do
         let(:input) { 'ip addr 127.0.0.0.1 ! asdfsdf' }
         let(:output) { ['ip', 'addr', '127.0.0.0.1'] }
-        subject { klass.new.call(input).map(&:last) }
+        subject { FFILexer.new.call(input).map(&:last) }
         it('dropped') { should == output }
       end
 

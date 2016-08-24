@@ -7,8 +7,8 @@ module IOSParser
     if const_defined?(:PureLexer)
       PureLexer
     else
-      require_relative 'ios_parser/c_lexer'
-      CLexer
+      require_relative 'ios_parser/ffi_lexer'
+      FFILexer
     end
   rescue LoadError
     require 'ios_parser/lexer'
