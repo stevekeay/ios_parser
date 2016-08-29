@@ -1,4 +1,5 @@
 $LOAD_PATH << File.dirname(__FILE__) + '/../lib'
+require 'pp'
 
 def klass
   described_class
