@@ -26,7 +26,7 @@ module IOSParser
 
     def section(parent = nil)
       [].tap do |commands|
-        until tokens.empty? || tokens.first.last == :DEDENT
+        until tokens.empty? || tokens.first.type == :DEDENT
           commands.push(command(parent, @document))
         end
         tokens.shift # discard :DEDENT
@@ -34,7 +34,7 @@ module IOSParser
     end
 
     def command(parent = nil, document = nil)
-      pos = tokens.first.first
+      pos = tokens.first.pos
       opts = { args: arguments, parent: parent, document: document, pos: pos }
 
       Command.new(opts).tap do |cmd|
@@ -49,17 +49,16 @@ module IOSParser
     end
 
     def arguments
-      [].tap do |args|
-        until tokens.empty? || tokens.first.last == :EOL
-          _, arg = tokens.shift
-          args << arg unless arguments_to_discard.include?(arg)
-        end
-        tokens.shift # discard :EOL
+      args = []
+      while (token = tokens.shift) && token.type != :EOL
+        next if arguments_to_discard.include?(token.type)
+        args << token.value
       end
+      args
     end
 
     def subsections(parent = nil)
-      if !tokens.empty? && tokens.first.last == :INDENT
+      if !tokens.empty? && tokens.first.type == :INDENT
         tokens.shift # discard :INDENT
         section(parent)
       else

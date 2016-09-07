@@ -12,11 +12,16 @@ module IOSParser
     end
 
     describe '#call' do
-      let(:pure_values) { PureLexer.new.call(input).map(&:last) }
-      let(:ffi_values) { FFILexer.new.call(input).map(&:last) }
+      let(:pure_values) { PureLexer.new.call(input).map(&:value) }
+      let(:ffi_values) { FFILexer.new.call(input).map(&:value) }
 
-      let(:pure_tokens) { PureLexer.new.call(input) }
-      let(:ffi_tokens) { FFILexer.new.call(input) }
+      let(:pure_tokens) do
+        PureLexer.new.call(input).map { |t| [t.pos, t.value] }
+      end
+
+      let(:ffi_tokens) do
+        FFILexer.new.call(input).map { |t| [t.pos, t.value] }
+      end
 
       context 'indented region' do
         let(:input) { <<-END }

@@ -3,6 +3,16 @@ require 'ffi-compiler/loader'
 
 module IOSParser
   class FFILexer
+    class Token
+      attr_reader :type, :value, :pos
+
+      def initialize(type, value, pos)
+        @type = type
+        @value = value
+        @pos = pos
+      end
+    end
+
     module Ext
       extend FFI::Library
       ffi_lib FFI::Compiler::Loader.find('ios_parser_ext')
@@ -69,7 +79,7 @@ module IOSParser
         def each
           size.times do |i|
             tok = token(i)
-            yield [tok.pos, tok.read]
+            yield FFILexer::Token.new(tok.type, tok.read, tok.pos)
           end
           self
         end

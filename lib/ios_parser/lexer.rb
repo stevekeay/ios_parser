@@ -2,6 +2,16 @@ module IOSParser
   class PureLexer
     LexError = IOSParser::LexError
 
+    class Token
+      attr_reader :type, :value, :pos
+
+      def initialize(type, value, pos)
+        @type = type
+        @value = value || type
+        @pos = pos
+      end
+    end
+
     attr_accessor :tokens, :token, :indents, :indent, :state, :char,
                   :string_terminator
 
@@ -57,10 +67,10 @@ module IOSParser
       end
     end
 
-    def make_token(value, pos: nil)
+    def make_token(type, value = nil, pos: nil)
       pos ||= @token_start || @this_char
       @token_start = nil
-      [pos, value]
+      Token.new(type, value, pos)
     end
 
     def comment
@@ -85,7 +95,7 @@ module IOSParser
     end
 
     def banner_begin?
-      tokens[-2] && tokens[-2].last == 'banner'
+      tokens[-2] && tokens[-2].value == 'banner'
     end
 
     def banner
@@ -100,7 +110,7 @@ module IOSParser
     def banner_end
       self.state = :root
       banner_end_clean_token
-      tokens << make_token(token) << make_token(:BANNER_END)
+      tokens << make_token(:STRING, token) << make_token(:BANNER_END)
       self.token = ''
     end
 
@@ -117,18 +127,18 @@ module IOSParser
     end
 
     def banner_garbage?(i)
-      tokens[i].last == :BANNER_END && tokens[i + 1].last == 'C'
+      tokens[i].type == :BANNER_END && tokens[i + 1].value == 'C'
     end
 
     def certificate_begin?
-      tokens[-6] && tokens[-6].last == :INDENT &&
-        tokens[-5] && tokens[-5].last == 'certificate'
+      tokens[-6] && tokens[-6].type == :INDENT &&
+        tokens[-5] && tokens[-5].value == 'certificate'
     end
 
     def certificate_begin
       self.state = :certificate
       indents.pop
-      tokens[-2..-1] = [make_token(:CERTIFICATE_BEGIN, pos: tokens[-1][0])]
+      tokens[-2..-1] = [make_token(:CERTIFICATE_BEGIN, pos: tokens[-1].pos)]
       certificate
     end
 
@@ -149,7 +159,9 @@ module IOSParser
 
     def certificate_end_tokens
       [
-        make_token(token[0..-6].gsub!(/\s+/, ' ').strip, pos: tokens[-1][0]),
+        make_token(:STRING,
+                   token[0..-6].gsub!(/\s+/, ' ').strip,
+                   pos: tokens[-1].pos),
         make_token(:CERTIFICATE_END, pos: @this_char),
         make_token(:EOL, pos: @this_char)
       ]
@@ -165,7 +177,7 @@ module IOSParser
     end
 
     def integer_token
-      token[0] == '0' ? word_token : make_token(Integer(token))
+      token[0] == '0' ? word_token : make_token(:INTEGER, Integer(token))
     end
 
     def digit?
@@ -190,7 +202,7 @@ module IOSParser
       if token.count('.') > 1 || token[-1] == '.'
         word_token
       else
-        make_token(Float(token))
+        make_token(:DECIMAL, Float(token))
       end
     end
 
@@ -204,7 +216,7 @@ module IOSParser
     end
 
     def word_token
-      make_token(token)
+      make_token(:STRING, token)
     end
 
     def word?
@@ -218,7 +230,7 @@ module IOSParser
 
     def space
       delimit
-      self.indent += 1 if tokens.last && tokens.last.last == :EOL
+      self.indent += 1 if tokens.last && tokens.last.type == :EOL
     end
 
     def space?
@@ -236,7 +248,7 @@ module IOSParser
     end
 
     def quoted_string_token
-      make_token(token)
+      make_token(:STRING, token)
     end
 
     def quoted_string?
