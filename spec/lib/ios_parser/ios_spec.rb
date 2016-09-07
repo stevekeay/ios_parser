@@ -5,6 +5,15 @@ require 'ios_parser/lexer'
 module IOSParser
   describe IOS do
     context 'indented region' do
+      let(:pure_parser) { IOSParser::IOS.new(lexer: PureLexer.new) }
+      let(:ffi_parser) { IOSParser::IOS.new(lexer: FFILexer.new) }
+
+      let(:pure_document) { pure_parser.call(input) }
+      let(:ffi_document) { ffi_parser.call(input) }
+
+      let(:pure_hash) { pure_document.to_hash }
+      let(:ffi_hash) { ffi_document.to_hash }
+
       let(:input) { <<-END }
 policy-map mypolicy_in
  class myservice_service
@@ -16,7 +25,7 @@ policy-map mypolicy_in
    command_with_no_args
 END
 
-      let(:output) do
+      let(:expected) do
         {
           commands:
             [{ args: ['policy-map', 'mypolicy_in'],
@@ -45,84 +54,102 @@ END
       end
 
       describe '#call' do
-        subject { klass.new.call(input) }
-        let(:subject_pure) do
-          klass.new(lexer: IOSParser::PureLexer.new).call(input)
-        end
-
-        it('constructs the right AST') { expect(subject.to_hash).to eq output }
-
-        it('constructs the right AST (using the pure-ruby lexer)') do
-          expect(subject_pure.to_hash[:commands]).to eq output[:commands]
-        end
+        it { expect(pure_hash).to eq(expected) }
+        it { expect(ffi_hash).to eq(expected) }
 
         it('can be searched by an exact command') do
-          expect(subject.find_all(name: 'set').map(&:to_hash))
-            .to eq [{ args: %w(set dscp cs1),
-                      commands: [], pos: 114 },
-                    { args: %w(set dscp cs2),
-                      commands: [], pos: 214 }]
+          expectation = [
+            {
+              args: %w(set dscp cs1),
+              commands: [],
+              pos: 114
+            }, {
+              args: %w(set dscp cs2),
+              commands: [],
+              pos: 214
+            }
+          ]
+
+          expect(pure_document.find_all(name: 'set').map(&:to_hash))
+            .to eq(expectation)
         end
 
         context 'can be searched by name and the first argument' do
-          let(:result) do
-            expect(subject.find_all(starts_with: starts_with).map(&:to_hash))
-              .to eq expectation
+          let(:finding) do
+            pure_document
+              .find_all(starts_with: starts_with)
+              .map(&:to_hash)
           end
 
-          let(:expectation) { [output[:commands][0][:commands][1]] }
+          let(:narrowed_expectation) { [expected[:commands][0][:commands][1]] }
 
           context 'with an array of strings' do
             let(:starts_with) { %w(class other_service) }
-            it { result }
+            it { expect(finding).to eq(narrowed_expectation) }
           end
 
           context 'with an array of regular expressions' do
             let(:starts_with) { [/.lass/, /^other_[a-z]+$/] }
-            it { result }
+            it { expect(finding).to eq(narrowed_expectation) }
           end
 
           context 'with a string, space-separated' do
             let(:starts_with) { 'class other_service' }
-            it { result }
+            it { expect(finding).to eq(narrowed_expectation) }
           end
 
           context 'integer argument' do
-            let(:expectation) do
-              [{ args: ['police', 300_000_000, 1_000_000, 'exceed-action',
-                        'policed-dscp-transmit'],
-                 commands: [{ args: %w(set dscp cs1),
-                              commands: [], pos: 114 }],
-                 pos: 50 }]
+            let(:narrowed_expectation) do
+              [
+                {
+                  args: [
+                    'police',
+                    300_000_000,
+                    1_000_000,
+                    'exceed-action',
+                    'policed-dscp-transmit'
+                  ],
+                  commands: [
+                    {
+                      args: %w(set dscp cs1),
+                      commands: [],
+                      pos: 114
+                    }
+                  ],
+                  pos: 50
+                }
+              ]
             end
 
             context 'integer query' do
               let(:starts_with) { ['police', 300_000_000] }
-              it { result }
+              it { expect(finding).to eq(narrowed_expectation) }
             end # context 'integer query'
 
             context 'string query' do
               let(:starts_with) { 'police 300000000' }
-              it { result }
+              it { expect(finding).to eq(narrowed_expectation) }
             end # context 'string query'
           end
         end # context 'integer argument'
 
         context 'nested search' do
           it 'queries can be chained' do
-            expect(subject
-                    .find('policy-map').find('class').find('police')
-                    .find('set')
-                    .to_hash)
-              .to eq(args: %w(set dscp cs1),
-                     commands: [], pos: 114)
+            finding = pure_document
+                      .find('policy-map')
+                      .find('class')
+                      .find('police')
+                      .find('set')
+                      .to_hash
+            expect(finding)
+              .to eq(args: %w(set dscp cs1), commands: [], pos: 114)
           end
         end # context 'nested search'
 
         context 'pass a block' do
           it 'is evaluated for each matching command' do
             ary = []
-            subject.find_all('class') { |cmd| ary << cmd.args[1] }
+            pure_document.find_all('class') { |cmd| ary << cmd.args[1] }
             expect(ary).to eq %w(myservice_service other_service)
           end
         end # context 'pass a block'
