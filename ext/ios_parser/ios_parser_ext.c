@@ -31,6 +31,7 @@
 #define ON_PUNCT(LEX)   IS_PUNCT(CURRENT(LEX))
 #define ON_QUOTE(LEX)   IS_QUOTE(CURRENT(LEX))
 #define ON_SPACE(LEX)   IS_SPACE(CURRENT(LEX))
+#define ON_BLANK(LEX)   IS_BLANK(CURRENT(LEX))
 #define ON_WORD(LEX)    IS_WORD(CURRENT(LEX))
 #define ON_ZERO(LEX)    IS_ZERO(CURRENT(LEX))
 #define ON_LEAD_COMMENT(LEX) IS_LEAD_COMMENT(CURRENT(LEX))
@@ -211,6 +212,7 @@ void lex_integer(Lexer* lex) {
 }
 
 bool lex_indent_update(Lexer* lex, int columns) {
+  lex->token_start = lex->pos;
   if (columns < lex->indent_columns) {
     while (lex->indent_levels && columns <= lex->indents[lex->indent_levels - 1]) {
       lex->indent_levels--;
@@ -233,6 +235,7 @@ bool lex_indent_update(Lexer* lex, int columns) {
 void lex_comment(Lexer* lex) {
   for (; lex->pos < lex->size; lex->pos++) {
     if (ON_NEWLINE(lex)) {
+      lex->pos++;
       return;
     } else {
       /* continue */
@@ -262,11 +265,14 @@ void lex_banner(Lexer* lex) {
          lex->pos < lex->size && lex->text[lex->pos + 1] == '\n')) {
       lex->token_size = lex->pos - lex->token_start;
       finish_token(lex, TOKEN_STRING, true);
+
       lex->token_start = lex->pos;
       finish_token(lex, TOKEN_BANNER_END, false);
-      while (!ON_SPACE(lex) && lex->pos < lex->size) lex->pos++;
-      lex->pos -= 2;
-      lex->token_start = lex->pos;
+
+      /* skip delimiter */
+      lex->pos++;
+      /* skip inexplicable characters */
+      while (CURRENT(lex) == 'C') lex->pos++;
       return;
     }
   }
@@ -309,46 +315,48 @@ void lex_certificate(Lexer* lex) {
 
   for (; lex->pos < lex->size; lex->pos++) {
     if (4 < lex->pos - lex->token_start &&
-        0 == strncmp("quit", &lex->text[lex->pos - 4], 4)) {
-      lex->token_size = lex->pos - lex->token_start - 4;
+        0 == strncmp("quit", lex->text + lex->pos - 4, 4)) {
+      lex->token_size = lex->pos - lex->token_start - 5;
+      while (IS_BLANK(lex->text[lex->token_start + lex->token_size])) {
+        lex->token_size--;
+      }
+      lex->token_size++;
+
       certificate_token = finish_token(lex, TOKEN_STRING, true);
       compact_spaces(certificate_token->value);
-      lex->pos++;
-      lex->token_start = lex->pos;
+
+      lex->token_start = lex->token_start + lex->token_size - 1;
       finish_token(lex, TOKEN_CERTIFICATE_END, false);
-      finish_token(lex, TOKEN_EOL, false);
-      while (!ON_NEWLINE(lex) && lex->pos < lex->size) lex->pos++;
-      lex->token_start = lex->pos - 1;
+      while (!ON_NEWLINE(lex)) lex->pos++;
+      lex->pos--;
+      lex->token_start = lex->pos;
       return;
     }
   }
-  /* consume characters */
-  /* recognize stop sequence */
-  /* emit tokens */
-  /* reset lexer */
 }
 
 void lex_middle_of_line(Lexer* lex) {
   for (; lex->pos < lex->size; lex->pos++) {
     if (on_banner(lex)) {
       lex_banner(lex);
-      return;
     } else if (on_certificate(lex)) {
       lex_certificate(lex);
-      return;
     } else if (ON_COMMENT(lex)) {
       lex_comment(lex);
-      return;
-    } else if (ON_NEWLINE(lex)) {
-      lex->token_start = lex->pos;
-      finish_token(lex, TOKEN_EOL, false);
-      return;
+      return;                   /* no EOL token for this line */
     } else if (ON_DECIMAL(lex) && !ON_ZERO(lex)) {
       lex->token_start = lex->pos;
       lex_integer(lex);
-    } else if (!ON_SPACE(lex)) {
+    } else if (!ON_BLANK(lex)) {
       lex->token_start = lex->pos;
       lex_string(lex);
+    }
+
+    if (ON_NEWLINE(lex)) {
+      lex->token_start = lex->pos;
+      finish_token(lex, TOKEN_EOL, false);
+      lex->pos++;
+      return;
     }
   }
 }
@@ -356,18 +364,17 @@ void lex_middle_of_line(Lexer* lex) {
 void lex_start_of_line(Lexer* lex) {
   int current_indent = 0;
 
-  for (; lex->pos < lex->size; lex->pos++) {
-    if (ON_LEAD_COMMENT(lex)) {
-      if (!lex_indent_update(lex, current_indent)) return;
-      current_indent = 0;
-      lex_comment(lex);
-    } else if (ON_SPACE(lex)) {
-      current_indent++;
-    } else {
-      if (!lex_indent_update(lex, current_indent)) return;
-      current_indent = 0;
-      lex_middle_of_line(lex);
-    }
+  while (ON_SPACE(lex)) {
+    current_indent++;
+    lex->pos++;
+  }
+
+  if (ON_LEAD_COMMENT(lex)) {
+    lex_comment(lex);
+  } else {
+    if (!lex_indent_update(lex, current_indent)) return;
+    current_indent = 0;
+    lex_middle_of_line(lex);
   }
 }
 
@@ -391,7 +398,11 @@ TokenStream* tokenize(char* input_text, int input_size) {
   lex.indent_levels = 0;
   lex.indents[0] = 0;
 
-  lex_start_of_line(&lex);
+  while (lex.pos < lex.size) {
+    lex_start_of_line(&lex);
+  }
+
+  /* balance any hanging indents */
   lex_indent_update(&lex, 0);
 
   return ts;

@@ -3,7 +3,7 @@ require 'ios_parser'
 require 'ios_parser/lexer'
 
 module IOSParser
-  describe Lexer do
+  describe :Lexer do
     it 'should load the appropriate constants' do
       [
         FFILexer,
@@ -141,9 +141,31 @@ END
         it { expect(ffi_values).to eq(expected) }
       end
 
+      context 'command after banner' do
+        let(:input) { text_fixture('complex_banner') + 'also' }
+
+        let(:expected) do
+          content = text_fixture('complex_banner').lines[1..-2].join
+          [
+            'banner', 'exec', :BANNER_BEGIN, content, :BANNER_END, :EOL,
+            'also'
+          ]
+        end
+
+        it { expect(pure_values).to eq(expected) }
+        it { expect(ffi_values).to eq(expected) }
+      end
+
       context 'decimal number' do
         let(:input) { 'boson levels at 93.2' }
         let(:expected) { ['boson', 'levels', 'at', 93.2] }
+        it { expect(pure_values).to eq(expected) }
+        it { expect(ffi_values).to eq(expected) }
+      end
+
+      context 'integer with leading zeroes' do
+        let(:input) { 'intruder detected in hangar 09' }
+        let(:expected) { %w(intruder detected in hangar 09) }
         it { expect(pure_values).to eq(expected) }
         it { expect(ffi_values).to eq(expected) }
       end
@@ -157,7 +179,7 @@ crypto pki certificate chain TP-self-signed-0123456789
   EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE
   DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD AAAA
         quit
-!
+crypto on
 END
         end
 
@@ -178,9 +200,12 @@ END
             'FFFFFFFF EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE '\
             'EEEEEEEE EEEEEEEE DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD '\
             'DDDDDDDD DDDDDDDD DDDDDDDD AAAA'],
-           [323, :CERTIFICATE_END],
-           [323, :EOL],
-           [323, :DEDENT]]
+           [308, :CERTIFICATE_END],
+           [322, :EOL],
+           [323, :DEDENT],
+           [323, 'crypto'],
+           [330, 'on'],
+           [332, :EOL]]
         end
 
         it { expect(pure_tokens).to eq(expected) }
@@ -272,7 +297,14 @@ END
 
       context '# after indentation is a comment' do
         let(:input) { "vlan 1\n # comment\nvlan 2" }
-        let(:expected) { ['vlan', 1, :EOL, :INDENT, :DEDENT, 'vlan', 2] }
+        let(:expected) { ['vlan', 1, :EOL, 'vlan', 2] }
+        it { expect(pure_values).to eq(expected) }
+        it { expect(ffi_values).to eq(expected) }
+      end
+
+      context 'comments do not affect indentation' do
+        let(:input) { "one\n # comment\ntwo\n" }
+        let(:expected) { ['one', :EOL, 'two', :EOL] }
         it { expect(pure_values).to eq(expected) }
         it { expect(ffi_values).to eq(expected) }
       end

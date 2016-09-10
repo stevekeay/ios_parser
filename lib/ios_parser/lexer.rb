@@ -1,3 +1,6 @@
+require 'delegate'
+require 'strscan'
+
 module IOSParser
   class PureLexer
     LexError = IOSParser::LexError
@@ -12,303 +15,174 @@ module IOSParser
       end
     end
 
-    attr_accessor :tokens, :token, :indents, :indent, :state, :char,
-                  :string_terminator
+    extend Forwardable
+    def_delegators :scanner,
+                   :check, :eos?, :matched, :pos, :rest, :scan, :scan_until,
+                   :skip, :unscan
 
-    def initialize
-      @text    = ''
-      @token   = ''
-      @tokens  = []
-      @indent  = 0
-      @indents = [0]
-      @state   = :root
-      @token_char = 0
-      @this_char  = -1
+    attr_accessor :text, :scanner, :token_start, :indents, :tokens
+
+    def call(text)
+      @text        = text
+      @scanner     = StringScanner.new(text)
+      @token_start = 0
+      @indents     = [0]
+      @tokens      = []
+
+      start_of_line until eos?
+      (indents.size - 1).times { add_token(pos, :DEDENT) }
+      tokens
     end
 
-    def call(input_text)
-      @text = input_text
+    private
 
-      input_text.each_char.with_index do |c, i|
-        @this_char = i
-        self.char = c
-        send(state)
-      end
+    TOKEN_TYPE = {
+      Bignum  => :INTEGER,
+      Fixnum  => :INTEGER,
+      Integer => :INTEGER,
+      Float   => :DECIMAL,
+      String  => :STRING
+    }.freeze
 
-      finalize
-    end
-
-    ROOT_TRANSITIONS = [
-      :space,
-      :banner_begin,
-      :certificate_begin,
-      :newline,
-      :comment,
-      :integer,
-      :quoted_string,
-      :word
-    ].freeze
-
-    def root
-      @token_start ||= @this_char
-
-      ROOT_TRANSITIONS.each do |meth|
-        return send(meth) if send(:"#{meth}?")
-      end
-
-      raise LexError, "Unknown character #{char.inspect}"
-    end
-
-    def root_line_start
-      if lead_comment?
-        comment
-      else
-        root
-      end
-    end
-
-    def make_token(type, value = nil, pos: nil)
-      pos ||= @token_start || @this_char
-      @token_start = nil
-      Token.new(type, value, pos)
-    end
-
-    def comment
-      self.state = :comment
-      update_indentation
-      self.state = :root if newline?
-    end
-
-    def comment?
-      char == '!'
-    end
-
-    def lead_comment?
-      char == '#' || char == '!'
-    end
-
-    def banner_begin
-      self.state = :banner
-      tokens << make_token(:BANNER_BEGIN)
-      @token_start = @this_char + 2
-      @banner_delimiter = char
-    end
-
-    def banner_begin?
-      tokens[-2] && tokens[-2].value == 'banner'
-    end
-
-    def banner
-      if char == @banner_delimiter && (@text[@this_char - 1] == "\n" ||
-                                       @text[@this_char + 1] == "\n")
-        banner_end
-      else
-        token << char
-      end
-    end
-
-    def banner_end
-      self.state = :root
-      banner_end_clean_token
-      tokens << make_token(:STRING, token) << make_token(:BANNER_END)
-      self.token = ''
-    end
-
-    def banner_end_clean_token
-      token.slice!(0) if token[0] == 'C'
-      token.slice!(0) if ["\n", ' '].include?(token[0])
-    end
-
-    def scrub_banner_garbage
-      tokens.each_index do |i|
-        next unless tokens[i + 1]
-        tokens.slice!(i + 1) if banner_garbage?(i)
-      end
-    end
-
-    def banner_garbage?(i)
-      tokens[i].type == :BANNER_END && tokens[i + 1].value == 'C'
-    end
-
-    def certificate_begin?
-      tokens[-6] && tokens[-6].type == :INDENT &&
-        tokens[-5] && tokens[-5].value == 'certificate'
-    end
-
-    def certificate_begin
-      self.state = :certificate
-      indents.pop
-      tokens[-2..-1] = [make_token(:CERTIFICATE_BEGIN, pos: tokens[-1].pos)]
-      certificate
+    def add_token(position, value)
+      type = TOKEN_TYPE.fetch(value.class, value)
+      tokens << Token.new(type, value, position)
     end
 
     def certificate
-      token[-5..-1] == "quit\n" ? certificate_end : token << char
+      return false unless certificate?
+
+      certificate_begin_pos = pos
+      skip(/\s+/)
+      token_start = pos
+      content = scan_until(/quit\n/) || return
+
+      certificate_begin(certificate_begin_pos)
+      certificate_end(certificate_begin_pos, token_start, content)
     end
 
-    def certificate_end
-      tokens.concat certificate_end_tokens
-      update_indentation
-      @token_start = @this_char
-
-      @token = ''
-      self.state = :line_start
-      self.indent = 0
-      root
+    def certificate?
+      tokens[-6] &&
+        tokens[-6].type == :INDENT &&
+        tokens[-5].value == 'certificate'
     end
 
-    def certificate_end_tokens
-      [
-        make_token(:STRING,
-                   token[0..-6].gsub!(/\s+/, ' ').strip,
-                   pos: tokens[-1].pos),
-        make_token(:CERTIFICATE_END, pos: @this_char),
-        make_token(:EOL, pos: @this_char)
-      ]
+    def certificate_begin(certificate_begin_pos)
+      tokens.pop(2)
+      indents.pop
+      add_token(certificate_begin_pos, :CERTIFICATE_BEGIN)
     end
 
-    def integer
-      self.state = :integer
-      if    dot?   then decimal
-      elsif digit? then token << char
-      elsif word?  then word
-      else              root
+    def certificate_end(certificate_begin_pos, token_start, content)
+      content = content[0..-6].rstrip
+      certificate_end_pos = certificate_begin_pos + content.size - 1
+      content = content.lstrip.gsub(/\s+/, ' ')
+      add_token(token_start, content)
+      add_token(certificate_end_pos, :CERTIFICATE_END)
+      scanner.pos = pos - 1
+    end
+
+    def end_of_line
+      return true if eos?
+      return false unless scan(/![^\n]*(?:\n|$)|\n/o)
+      add_token(pos - 1, :EOL) if matched[-1] == "\n"
+      true
+    end
+
+    def banner
+      return false unless banner?
+      skip(/[\v\t ]+/)
+      add_token(pos, :BANNER_BEGIN)
+      banner_content
+      add_token(pos - 1, :BANNER_END)
+    end
+
+    def banner?
+      tokens[-2] && tokens[-2].value == 'banner'
+    end
+
+    def banner_content
+      delimiter_word = scan(/\S+$/) || return
+      delimiter = Regexp.escape(delimiter_word[0])
+      skip(/\n/)
+      token_start = pos
+      content = scan_until(/^#{delimiter}|#{delimiter}$/)
+      add_token(token_start, content[0..-2])
+      skip(/C+/) # yay inexplicable garbage characters!
+    end
+
+    def middle_of_line
+      loop do
+        (end_of_line && return) || spaces || visible_token ||
+          (raise LexError, 'Unknown characters at #{pos}: #{text[pos, 20]}')
       end
     end
 
-    def integer_token
-      token[0] == '0' ? word_token : make_token(:INTEGER, Integer(token))
-    end
-
-    def digit?
-      ('0'..'9').cover? char
-    end
-    alias integer? digit?
-
-    def dot?
-      char == '.'
-    end
-
-    def decimal
-      self.state = :decimal
-      if    digit? then token << char
-      elsif dot?   then token << char
-      elsif word?  then word
-      else              root
-      end
-    end
-
-    def decimal_token
-      if token.count('.') > 1 || token[-1] == '.'
-        word_token
-      else
-        make_token(:DECIMAL, Float(token))
-      end
-    end
-
-    def decimal?
-      dot? || digit?
-    end
-
-    def word
-      self.state = :word
-      word? ? token << char : root
-    end
-
-    def word_token
-      make_token(:STRING, token)
-    end
-
-    def word?
-      digit? || dot? ||
-        ('a'..'z').cover?(char) ||
-        ('A'..'Z').cover?(char) ||
-        ['-', '+', '$', ':', '/', ',', '(', ')', '|', '*', '#', '=', '<', '>',
-         '!', '"', '&', '@', ';', '%', '~', '{', '}', "'", '?', '[', ']', '_',
-         '^', '\\', '`'].include?(char)
-    end
-
-    def space
-      delimit
-      self.indent += 1 if tokens.last && tokens.last.type == :EOL
-    end
-
-    def space?
-      char == ' ' || char == "\t" || char == "\r"
+    def spaces
+      skip(/[\v\t ]+/o)
     end
 
     def quoted_string
-      self.state = :quoted_string
-      token << char
-      if string_terminator.nil?
-        self.string_terminator = char
-      elsif char == string_terminator
-        delimit
+      token_start = pos
+      delimiter = scan(/['"]/o)
+      return false unless delimiter
+      content = scan_until(Regexp.new(delimiter)) ||
+                (raise LexError, 'Unterminated quoted string starting at '\
+                                 "#{token_start}: #{text[token_start, 20]}")
+      add_token(token_start, delimiter + content)
+    end
+
+    def start_of_line
+      return if scan(/[\t ]*[!#][^\n]*\n/o)
+      update_indentation(scan(/[\t ]*/o))
+      middle_of_line
+    end
+
+    def visible_token
+      banner || certificate || quoted_string || word
+    end
+
+    def update_indentation(leading_spaces)
+      return unless leading_spaces
+
+      size = leading_spaces.size
+      case size <=> indents.last
+      when -1
+        update_indentation_dedent(size)
+      when +1
+        update_indentation_indent(size)
       end
     end
 
-    def quoted_string_token
-      make_token(:STRING, token)
+    def update_indentation_dedent(size)
+      while 1 < indents.size && size <= indents[-2]
+        add_token(pos, :DEDENT)
+        indents.pop
+      end
     end
 
-    def quoted_string?
-      char == '"' || char == "'"
+    def update_indentation_indent(size)
+      add_token(pos, :INDENT)
+      indents << size
     end
 
-    def newline
-      delimit
-      self.state = :line_start
-      self.indent = 0
-      tokens << make_token(:EOL)
+    def word
+      token_start = pos
+      converted = word_convert(scan(/\S+/o)) || return
+      add_token(token_start, converted)
     end
 
-    def newline?
-      char == "\n"
-    end
-
-    def line_start
-      if space?
-        self.indent += 1
+    def word_convert(content)
+      case content
+      when nil, ''
+        nil
+      when /^[1-9]\d*$/o
+        Integer(content)
+      when /^\d*\.+d*$|^[1-9]\d*\.\d*$/o
+        Float(content)
       else
-        update_indentation
-        root_line_start
+        content
       end
     end
-
-    def delimit
-      return if token.empty?
-      tokens << send(:"#{state}_token")
-      self.state = :root
-      self.token = ''
-    end
-
-    def update_indentation
-      pop_dedent while 1 < indents.size && indent <= indents[-2]
-      push_indent if indent > indents.last
-      self.indent = 0
-    end
-
-    def pop_dedent
-      tokens << make_token(:DEDENT)
-      indents.pop
-    end
-
-    def push_indent
-      tokens << make_token(:INDENT)
-      indents.push(indent)
-    end
-
-    def finalize
-      if state == :quoted_string
-        pos = @text.rindex(string_terminator)
-        raise LexError, "Unterminated quoted string starting at #{pos}: "\
-                        "#{@text[pos..pos + 20]}"
-      end
-
-      delimit
-      update_indentation
-      scrub_banner_garbage
-      tokens
-    end
-  end # class PureLexer
+  end # PureLexer
 end # module IOSParser
