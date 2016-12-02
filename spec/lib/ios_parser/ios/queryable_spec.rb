@@ -17,12 +17,12 @@ END
 
       let(:expectation) { 'set dscp cs1' }
       let(:parsed) { IOSParser.parse(input) }
-      subject { parsed.find(matcher).line }
+      subject { parsed.find(matcher.freeze).line }
 
       describe '#find' do
         context 'shortcut matcher' do
           describe String do
-            let(:matcher) { 'set dscp cs1' }
+            let(:matcher) { 'set dscp cs1'.freeze }
             it { should == expectation }
           end
 
@@ -40,30 +40,32 @@ END
 
         context 'explicit matcher form of shortcut matcher' do
           describe String do
-            let(:matcher) { { starts_with: 'set dscp cs1' } }
+            let(:matcher) { { starts_with: 'set dscp cs1'.freeze }.freeze }
             it { should == expectation }
           end
 
           describe Regexp do
-            let(:matcher) { { line: /set .* cs1/ } }
+            let(:matcher) { { line: /set .* cs1/ }.freeze }
             it { should == expectation }
           end
 
           describe Proc do
             let(:expectation) { 'command_with_no_args' }
-            let(:matcher) { { procedure: ->(c) { c.args.count == 1 } } }
+            let(:matcher) { { procedure: ->(c) { c.args.count == 1 } }.freeze }
             it { should == expectation }
           end
         end # context 'explicit matcher form of shortcut matcher' do
 
         context 'matcher: contains' do
           describe String do
-            let(:matcher) { { contains: 'dscp cs1' } }
+            let(:matcher) { { contains: 'dscp cs1'.freeze }.freeze }
             it { should == expectation }
           end
 
           describe Array do
-            let(:matcher) { { contains: %w(dscp cs1) } }
+            let(:matcher) {
+              { contains: ['dscp'.freeze, 'cs1'.freeze].freeze }.freeze
+            }
             it { should == expectation }
           end
         end # context 'matcher: contains' do
@@ -72,34 +74,36 @@ END
           let(:expectation) { 'class my_service' }
 
           describe String do
-            let(:matcher) { { ends_with: 'my_service' } }
+            let(:matcher) { { ends_with: 'my_service'.freeze }.freeze }
             it { should == expectation }
           end
 
           describe Array do
-            let(:matcher) { { ends_with: ['my_service'] } }
+            let(:matcher) { { ends_with: ['my_service'.freeze].freeze }.freeze }
             it { should == expectation }
           end
         end # context 'matcher: ends_with' do
 
         context 'matcher: all' do
-          let(:matcher) { { all: ['set', /cs1/] } }
+          let(:matcher) { { all: ['set'.freeze, /cs1/].freeze }.freeze }
           it { should == expectation }
         end
 
         context 'matcher: parent' do
-          let(:matcher) { { parent: /police 3/ } }
+          let(:matcher) { { parent: /police 3/ }.freeze }
           it { should == expectation }
         end
 
         context 'matcher: any' do
-          let(:matcher) { { any: [/asdf/, /cs1/, /qwerwqe/] } }
+          let(:matcher) { { any: [/asdf/, /cs1/, /qwerwqe/].freeze }.freeze }
           it { should == expectation }
         end
 
         context 'matcher: any (with a hash)' do
           let(:matcher) do
-            { any: { depth: 0, procedure: ->(c) { c.args.count == 1 } } }
+            {
+              any: { depth: 0, procedure: ->(c) { c.args.count == 1 } }.freeze
+            }.freeze
           end
 
           it do
@@ -109,13 +113,13 @@ END
         end
 
         context 'matcher: depth' do
-          let(:matcher) { { depth: 3 } }
+          let(:matcher) { { depth: 3 }.freeze }
           it { should == expectation }
         end
 
         context 'matcher: none' do
           let(:matcher) do
-            { none: [/policy/, /class/, /police/] }
+            { none: [/policy/, /class/, /police/].freeze }.freeze
           end
           it { should == expectation }
         end
@@ -127,8 +131,8 @@ END
                 none: /policy/,
                 not: /class/,
                 not_all: /police/
-              }
-            }
+              }.freeze
+            }.freeze
           end
 
           it do
@@ -139,12 +143,12 @@ END
         end
 
         context 'matcher: any_child' do
-          let(:matcher) { { not: { any_child: /dscp/ } } }
+          let(:matcher) { { not: { any_child: /dscp/ }.freeze }.freeze }
           it { should == expectation }
         end
 
         context 'matcher: no_child' do
-          let(:matcher) { { no_child: /dscp/ } }
+          let(:matcher) { { no_child: /dscp/ }.freeze }
           it { should == expectation }
         end
       end # describe '#find' do

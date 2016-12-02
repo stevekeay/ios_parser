@@ -49,7 +49,8 @@ module IOSParser
           alias any_child query_expression
           alias no_child query_expression
 
-          def query_expression_hash(raw)
+          def query_expression_hash(original)
+            raw = original.dup
             raw.each_pair { |pred, arg| raw[pred] &&= send(pred, arg) }
             raw
           end
