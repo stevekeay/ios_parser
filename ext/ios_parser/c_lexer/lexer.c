@@ -203,7 +203,7 @@ static void process_comment(LexInfo *lex) {
 
 static void process_quoted_string(LexInfo *lex) {
     char c = CURRENT_CHAR(lex);
-    
+
     lex->token_length++;
     if (!lex->string_terminator) {
         lex->string_terminator = c;
@@ -433,7 +433,7 @@ static VALUE call(VALUE self, VALUE input_text) {
         case (LEX_STATE_QUOTED_STRING):
             process_quoted_string(lex);
             break;
-            
+
         case (LEX_STATE_WORD):
             process_word(lex);
             break;

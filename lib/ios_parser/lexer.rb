@@ -157,10 +157,9 @@ module IOSParser
 
     def integer
       self.state = :integer
-      case
-      when dot?   then decimal
-      when digit? then token << char
-      when word?  then word
+      if dot?   then decimal
+      elsif digit? then token << char
+      elsif word?  then word
       else root
       end
     end
@@ -180,10 +179,9 @@ module IOSParser
 
     def decimal
       self.state = :decimal
-      case
-      when digit? then token << char
-      when dot?   then token << char
-      when word?  then word
+      if digit? then token << char
+      elsif dot?   then token << char
+      elsif word?  then word
       else root
       end
     end

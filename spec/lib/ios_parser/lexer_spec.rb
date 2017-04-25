@@ -37,8 +37,7 @@ END
            'police', 600_000_000, 1_000_000, 'exceed-action',
            'policed-dscp-transmit', :EOL,
            :INDENT,
-           'set', 'dscp', 'cs2', :EOL, :DEDENT, :DEDENT, :DEDENT
-          ]
+           'set', 'dscp', 'cs2', :EOL, :DEDENT, :DEDENT, :DEDENT]
         end
 
         subject { klass.new.call(input).map(&:last) }
@@ -71,8 +70,7 @@ END
              :DEDENT, :DEDENT, :DEDENT,
              'router', 'ospf', 12_345, :EOL,
              :INDENT, 'nsr', :EOL,
-             :DEDENT
-            ]
+             :DEDENT]
           end
 
           it 'pure' do
@@ -164,8 +162,7 @@ END
             'DDDDDDDD DDDDDDDD DDDDDDDD AAAA'],
            [323, :CERTIFICATE_END],
            [323, :EOL],
-           [323, :DEDENT]
-          ]
+           [323, :DEDENT]]
         end
 
         subject { klass.new.call(input) }
