@@ -123,6 +123,18 @@ END
         it { expect(subject_pure.map(&:last)).to eq output }
       end
 
+      context 'complex eos banner' do
+        let(:input) { "banner motd\n'''\nEOF\n" }
+
+        let(:output) do
+          content = input.lines[1..-2].join
+          ['banner', 'motd', :BANNER_BEGIN, content, :BANNER_END, :EOL]
+        end
+
+        it { expect(subject.map(&:last)).to eq output }
+        it { expect(subject_pure.map(&:last)).to eq output }
+      end
+
       context 'decimal number' do
         let(:input) { 'boson levels at 93.2' }
         let(:output) { ['boson', 'levels', 'at', 93.2] }

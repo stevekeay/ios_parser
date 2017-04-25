@@ -81,7 +81,7 @@ module IOSParser
       self.state = :banner
       tokens << make_token(:BANNER_BEGIN)
       @token_start = @this_char + 2
-      @banner_delimiter = char
+      @banner_delimiter = char == "\n" ? 'EOF' : char
     end
 
     def banner_begin?
@@ -89,19 +89,36 @@ module IOSParser
     end
 
     def banner
-      if char == @banner_delimiter && (@text[@this_char - 1] == "\n" ||
-                                       @text[@this_char + 1] == "\n")
-        banner_end
+      if banner_end_char?
+        banner_end_char
+      elsif banner_end_string?
+        banner_end_string
       else
         token << char
       end
     end
 
-    def banner_end
+    def banner_end_string
+      self.state = :root
+      token.chomp!(@banner_delimiter[0..-2])
+      tokens << make_token(token) << make_token(:BANNER_END)
+      self.token = ''
+    end
+
+    def banner_end_string?
+      @banner_delimiter.size > 1 && (token + char).end_with?(@banner_delimiter)
+    end
+
+    def banner_end_char
       self.state = :root
       banner_end_clean_token
       tokens << make_token(token) << make_token(:BANNER_END)
       self.token = ''
+    end
+
+    def banner_end_char?
+      char == @banner_delimiter && (@text[@this_char - 1] == "\n" ||
+                                    @text[@this_char + 1] == "\n")
     end
 
     def banner_end_clean_token
@@ -245,6 +262,7 @@ module IOSParser
 
     def newline
       delimit
+      return banner_begin if banner_begin?
       self.state = :line_start
       self.indent = 0
       tokens << make_token(:EOL)
@@ -265,6 +283,13 @@ module IOSParser
 
     def delimit
       return if token.empty?
+
+      unless respond_to?(:"#{state}_token")
+        pos = @token_start || @this_char
+        raise LexError, "Unterminated #{state} starting at #{pos}: "\
+                        "#{@text[pos..pos + 20].inspect}"
+      end
+
       tokens << send(:"#{state}_token")
       self.state = :root
       self.token = ''
