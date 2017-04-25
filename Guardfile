@@ -3,7 +3,7 @@ guard :rake, task: 'compile' do
 end
 
 guard :rspec, cmd: 'bundle exec rspec --color --fail-fast' do
-  watch(%r{^spec/.+_spec\.rb$}) { |m| m }
+  watch(%r{^spec/.+_spec\.rb$})
   watch(%r{^lib/(.+)\.rb$})     { |m| "spec/lib/#{m[1]}_spec.rb" }
   watch('spec/spec_helper.rb')  { 'spec' }
   watch(%r{^ext/(.+)\.[ch]$})   { 'spec' }
