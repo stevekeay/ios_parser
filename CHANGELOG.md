@@ -1,3 +1,10 @@
+## 0.5.0 (2017-04-26)
+
+Enhancements:
+
+- handle EOS-style banners
+
+
 ## 0.4.0 (2016-06-08)
 
 Enhancements:
