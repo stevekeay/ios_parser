@@ -63,9 +63,9 @@ END
           end
 
           describe Array do
-            let(:matcher) {
+            let(:matcher) do
               { contains: ['dscp'.freeze, 'cs1'.freeze].freeze }.freeze
-            }
+            end
             it { should == expectation }
           end
         end # context 'matcher: contains' do

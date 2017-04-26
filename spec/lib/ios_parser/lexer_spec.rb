@@ -37,8 +37,7 @@ END
            'police', 600_000_000, 1_000_000, 'exceed-action',
            'policed-dscp-transmit', :EOL,
            :INDENT,
-           'set', 'dscp', 'cs2', :EOL, :DEDENT, :DEDENT, :DEDENT
-          ]
+           'set', 'dscp', 'cs2', :EOL, :DEDENT, :DEDENT, :DEDENT]
         end
 
         subject { klass.new.call(input).map(&:last) }
@@ -71,8 +70,7 @@ END
              :DEDENT, :DEDENT, :DEDENT,
              'router', 'ospf', 12_345, :EOL,
              :INDENT, 'nsr', :EOL,
-             :DEDENT
-            ]
+             :DEDENT]
           end
 
           it 'pure' do
@@ -125,6 +123,18 @@ END
         it { expect(subject_pure.map(&:last)).to eq output }
       end
 
+      context 'complex eos banner' do
+        let(:input) { "banner motd\n'''\nEOF\n" }
+
+        let(:output) do
+          content = input.lines[1..-2].join
+          ['banner', 'motd', :BANNER_BEGIN, content, :BANNER_END, :EOL]
+        end
+
+        it { expect(subject.map(&:last)).to eq output }
+        it { expect(subject_pure.map(&:last)).to eq output }
+      end
+
       context 'decimal number' do
         let(:input) { 'boson levels at 93.2' }
         let(:output) { ['boson', 'levels', 'at', 93.2] }
@@ -164,8 +174,7 @@ END
             'DDDDDDDD DDDDDDDD DDDDDDDD AAAA'],
            [323, :CERTIFICATE_END],
            [323, :EOL],
-           [323, :DEDENT]
-          ]
+           [323, :DEDENT]]
         end
 
         subject { klass.new.call(input) }

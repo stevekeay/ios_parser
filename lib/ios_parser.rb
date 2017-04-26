@@ -31,7 +31,7 @@ module IOSParser
     end
 
     def json_to_ios(text)
-      hash_to_ios JSON.load(text)
+      hash_to_ios JSON.parse(text)
     end
   end
 end
