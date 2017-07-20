@@ -80,7 +80,12 @@ module IOSParser
 
     def comment
       self.state = :comment
-      return unless newline?
+      tokens << make_token(:EOL) if tokens.last &&
+                                    !tokens.last.value.is_a?(Symbol)
+      comment_newline if newline?
+    end
+
+    def comment_newline
       delimit
       self.start_of_line = @this_char + 1
       self.state = :line_start

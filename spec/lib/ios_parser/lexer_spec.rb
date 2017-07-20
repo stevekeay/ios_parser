@@ -193,7 +193,7 @@ END
 
       context 'comments' do
         let(:input) { 'ip addr 127.0.0.0.1 ! asdfsdf' }
-        let(:output) { ['ip', 'addr', '127.0.0.0.1'] }
+        let(:output) { ['ip', 'addr', '127.0.0.0.1', :EOL] }
         subject { klass.new.call(input).map(&:value) }
         it('dropped') { should == output }
       end
@@ -340,6 +340,22 @@ END
           expect(subject_pure).to eq expected_full
         end
       end
+
+      context 'comment at end of line' do
+        let(:input) do
+          <<-END.unindent
+            description !
+            switchport access vlan 2
+          END
+        end
+
+        let(:output) do
+          ['description', :EOL, 'switchport', 'access', 'vlan', 2, :EOL]
+        end
+
+        it { expect(subject_pure.map(&:value)).to eq output }
+        it { expect(subject.map(&:value)).to eq output }
+      end # context 'comment at end of line' do
     end
   end
 end

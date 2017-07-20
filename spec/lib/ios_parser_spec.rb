@@ -99,5 +99,22 @@ describe IOSParser do
         expect(actual).to eq(output)
       end
     end # context "partial outdent" do
+
+    context 'comment at end of line' do
+      let(:input) do
+        <<END.unindent
+          description !
+          switchport access vlan 2
+END
+      end
+
+      subject { described_class.parse(input) }
+
+      it 'parses both commands' do
+        should be_a IOSParser::IOS::Document
+        expect(subject.find(starts_with: 'description')).not_to be_nil
+        expect(subject.find(starts_with: 'switchport')).not_to be_nil
+      end
+    end
   end # describe '.parse'
 end # describe IOSParser
