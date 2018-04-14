@@ -1,4 +1,4 @@
-$LOAD_PATH.unshift File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift File.expand_path('lib', __dir__)
 require 'ios_parser/version'
 
 Gem::Specification.new do |s|
@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
     s.extensions << 'ext/ios_parser/c_lexer/extconf.rb'
   end
 
-  s.add_development_dependency 'rspec', '~>3.2'
-  s.add_development_dependency 'rubocop', '~>0.37'
   s.add_development_dependency 'rake-compiler', '~>0.9'
+  s.add_development_dependency 'rspec', '~>3.2'
+  s.add_development_dependency 'rubocop', '~>0.54'
 end

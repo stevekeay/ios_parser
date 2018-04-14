@@ -5,36 +5,36 @@ require 'ios_parser/lexer'
 module IOSParser
   describe IOS do
     context 'indented region' do
-      let(:input) { <<-END }
-policy-map mypolicy_in
- class myservice_service
-  police 300000000 1000000 exceed-action policed-dscp-transmit
-   set dscp cs1
- class other_service
-  police 600000000 1000000 exceed-action policed-dscp-transmit
-   set dscp cs2
-   command_with_no_args
-END
+      let(:input) { <<-END.unindent }
+        policy-map mypolicy_in
+         class myservice_service
+          police 300000000 1000000 exceed-action policed-dscp-transmit
+           set dscp cs1
+         class other_service
+          police 600000000 1000000 exceed-action policed-dscp-transmit
+           set dscp cs2
+           command_with_no_args
+        END
 
       let(:output) do
         {
           commands:
             [{ args: ['policy-map', 'mypolicy_in'],
                commands:
-                 [{ args: %w(class myservice_service),
+                 [{ args: %w[class myservice_service],
                     commands: [{ args: ['police', 300_000_000, 1_000_000,
                                         'exceed-action',
                                         'policed-dscp-transmit'],
-                                 commands: [{ args: %w(set dscp cs1),
+                                 commands: [{ args: %w[set dscp cs1],
                                               commands: [], pos: 114 }],
                                  pos: 50 }],
                     pos: 24 },
 
-                  { args: %w(class other_service),
+                  { args: %w[class other_service],
                     commands: [{ args: ['police', 600_000_000, 1_000_000,
                                         'exceed-action',
                                         'policed-dscp-transmit'],
-                                 commands: [{ args: %w(set dscp cs2),
+                                 commands: [{ args: %w[set dscp cs2],
                                               commands: [], pos: 214 },
                                             { args: ['command_with_no_args'],
                                               commands: [], pos: 230 }],
@@ -58,9 +58,9 @@ END
 
         it('can be searched by an exact command') do
           expect(subject.find_all(name: 'set').map(&:to_hash))
-            .to eq [{ args: %w(set dscp cs1),
+            .to eq [{ args: %w[set dscp cs1],
                       commands: [], pos: 114 },
-                    { args: %w(set dscp cs2),
+                    { args: %w[set dscp cs2],
                       commands: [], pos: 214 }]
         end
 
@@ -73,7 +73,7 @@ END
           let(:expectation) { [output[:commands][0][:commands][1]] }
 
           context 'with an array of strings' do
-            let(:starts_with) { %w(class other_service) }
+            let(:starts_with) { %w[class other_service] }
             it { result }
           end
 
@@ -91,7 +91,7 @@ END
             let(:expectation) do
               [{ args: ['police', 300_000_000, 1_000_000, 'exceed-action',
                         'policed-dscp-transmit'],
-                 commands: [{ args: %w(set dscp cs1),
+                 commands: [{ args: %w[set dscp cs1],
                               commands: [], pos: 114 }],
                  pos: 50 }]
             end
@@ -114,7 +114,7 @@ END
                     .find('policy-map').find('class').find('police')
                     .find('set')
                     .to_hash)
-              .to eq(args: %w(set dscp cs1),
+              .to eq(args: %w[set dscp cs1],
                      commands: [], pos: 114)
           end
         end # context 'nested search'
@@ -123,19 +123,19 @@ END
           it 'is evaluated for each matching command' do
             ary = []
             subject.find_all('class') { |cmd| ary << cmd.args[1] }
-            expect(ary).to eq %w(myservice_service other_service)
+            expect(ary).to eq %w[myservice_service other_service]
           end
         end # context 'pass a block'
       end # end context 'indented region'
 
       context '2950' do
-        let(:input) { <<END }
-hostname myswitch1
-vlan 3
- name MyVlanName
-interface FastEthernet0/1
- speed 100
-END
+        let(:input) { <<-END.unindent }
+          hostname myswitch1
+          vlan 3
+           name MyVlanName
+          interface FastEthernet0/1
+           speed 100
+        END
 
         let(:output) { klass.new.call(input) }
 
@@ -152,8 +152,8 @@ END
         end
 
         it('parses snmp commands') do
-          snmp_command = <<-END
-snmp-server group my_group v3 auth read my_ro
+          snmp_command = <<-END.unindent
+            snmp-server group my_group v3 auth read my_ro
         END
           result = klass.new.call(snmp_command)
           expect(result[0].name).to eq 'snmp-server'
@@ -176,14 +176,14 @@ snmp-server group my_group v3 auth read my_ro
         end
 
         it('parses a banner') do
-          banner_text = <<-END
+          banner_text = <<-END.unindent
 
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+            sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
 
 
-END
+          END
           banner_command = "banner exec ^C\n#{banner_text}^C\n"
 
           result = klass.new.call(banner_command)
@@ -195,44 +195,44 @@ END
         end
 
         it('parses a crypto trustpoint section') do
-          text = <<END
-crypto pki trustpoint TP-self-signed-0123456789
- enrollment selfsigned
- subject-name cn=IOS-Self-Signed-Certificate-1234567890
- revocation-check none
- rsakeypair TP-self-signed-2345678901
-END
+          text = <<-END.unindent
+            crypto pki trustpoint TP-self-signed-0123456789
+             enrollment selfsigned
+             subject-name cn=IOS-Self-Signed-Certificate-1234567890
+             revocation-check none
+             rsakeypair TP-self-signed-2345678901
+          END
           result = klass.new.call(text)
           expect(result).not_to be_nil
         end
 
         it('parses a crypto certificate section') do
           sp = ' '
-          text = <<END
-crypto pki certificate chain TP-self-signed-1234567890
- certificate self-signed 01
-  FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF#{sp}
-  EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE#{sp}
-  DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD#{sp}
-  CCCCCCCC CCCCCCCC
-  quit
+          text = <<-END.unindent
+            crypto pki certificate chain TP-self-signed-1234567890
+             certificate self-signed 01
+              FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF#{sp}
+              EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE#{sp}
+              DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD#{sp}
+              CCCCCCCC CCCCCCCC
+              quit
 
-END
+          END
 
           result = klass.new.call(text)
           expect(result).not_to be_nil
         end
 
         it('parses an MST configuration section') do
-          text = <<END
-spanning-tree mst configuration
- name MyMSTConfig
- revision 1
- instance 1 vlan 1-59, 4000
- instance 2 vlan 90-99
- instance 3 vlan 100-1500
- instance 4 vlan 2000-3500, 4000
-END
+          text = <<-END.unindent
+            spanning-tree mst configuration
+             name MyMSTConfig
+             revision 1
+             instance 1 vlan 1-59, 4000
+             instance 2 vlan 90-99
+             instance 3 vlan 100-1500
+             instance 4 vlan 2000-3500, 4000
+          END
 
           result = klass.new.call(text)
           expect(result).not_to be_nil
@@ -240,12 +240,12 @@ END
       end # context '2950'
 
       it('finds various ip route formats') do
-        text = <<END
-ip route 10.0.0.1 255.255.255.255 Null0
-ip route 9.9.9.199 255.255.255.255 42.42.42.142 name PONIES
-ip route vrf Mgmt-intf 0.0.0.0 0.0.0.0 9.9.9.199
-ip route 0.0.0.0/0 11.11.0.111 120
-END
+        text = <<-END.unindent
+          ip route 10.0.0.1 255.255.255.255 Null0
+          ip route 9.9.9.199 255.255.255.255 42.42.42.142 name PONIES
+          ip route vrf Mgmt-intf 0.0.0.0 0.0.0.0 9.9.9.199
+          ip route 0.0.0.0/0 11.11.0.111 120
+        END
 
         result = klass.new.call(text)
 
@@ -275,11 +275,11 @@ END
 
       describe '#to_s' do
         subject { klass.new.call(input) }
-        let(:police2) { <<END }
+        let(:police2) { <<-END }
   police 600000000 1000000 exceed-action policed-dscp-transmit
    set dscp cs2
    command_with_no_args
-END
+        END
 
         it('returns the string form of the original command(s)') do
           expect(subject.to_s).to eq input

@@ -4,16 +4,16 @@ require 'ios_parser'
 module IOSParser
   class IOS
     describe Queryable do
-      let(:input) { <<-END }
-policy-map mypolicy_in
- class some_service
-  police 300000000 1000000 exceed-action policed-dscp-transmit
-   set dscp cs1
- class my_service
-  police 600000000 1000000 exceed-action policed-dscp-transmit
-   set dscp cs2
-   command_with_no_args
-END
+      let(:input) { <<-END.unindent }
+        policy-map mypolicy_in
+         class some_service
+          police 300000000 1000000 exceed-action policed-dscp-transmit
+           set dscp cs1
+         class my_service
+          police 600000000 1000000 exceed-action policed-dscp-transmit
+           set dscp cs2
+           command_with_no_args
+      END
 
       let(:expectation) { 'set dscp cs1' }
       let(:parsed) { IOSParser.parse(input) }

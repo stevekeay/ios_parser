@@ -133,8 +133,8 @@ module IOSParser
       end
     end
 
-    def banner_garbage?(i)
-      tokens[i].last == :BANNER_END && tokens[i + 1].last == 'C'
+    def banner_garbage?(pos)
+      tokens[pos].last == :BANNER_END && tokens[pos + 1].last == 'C'
     end
 
     def certificate_begin?

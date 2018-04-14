@@ -2,7 +2,10 @@ require_relative 'ios/document'
 
 module IOSParser
   class IOS
-    attr_accessor :lexer, :tokens, :source, :document
+    attr_accessor :document
+    attr_accessor :lexer
+    attr_accessor :source
+    attr_writer :tokens
 
     def initialize(parent: nil, lexer: IOSParser::Lexer.new)
       @document = Document.new(nil)

@@ -131,12 +131,12 @@ module IOSParser
             end
           end
 
-          def compare_string_or_case(a, b)
-            case a
+          def compare_string_or_case(a_object, b_object)
+            case a_object
             when String
-              a == b.to_s
+              a_object == b_object.to_s
             else
-              a === b
+              a_object === b_object
             end
           end
 
@@ -184,7 +184,7 @@ module IOSParser
           alias not not_all
 
           def none(expressions, command)
-            !expressions.any? { |expr| all([expr], command) }
+            expressions.none? { |expr| all([expr], command) }
           end
 
           def depth(expr, command)

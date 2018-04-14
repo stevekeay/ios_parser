@@ -9,6 +9,13 @@ Style/Documentation:
 Style/CaseEquality:
   Enabled: false
 
+Layout/IndentHeredoc:
+  EnforcedStyle: unindent
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+
 Metrics/ClassLength:
   Exclude:
     - 'lib/ios_parser/lexer.rb'
@@ -17,3 +24,16 @@ Metrics/ClassLength:
 Metrics/ModuleLength:
   Exclude:
     - 'spec/**/*'
+
+Naming/HeredocDelimiterNaming:
+  Exclude:
+    - 'spec/**/*'
+
+Style/CommentedKeyword:
+  Enabled: false
+
+Style/SymbolArray:
+  Enabled: false
+
+Style/YodaCondition:
+  Enabled: false

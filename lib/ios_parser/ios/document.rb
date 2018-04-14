@@ -5,7 +5,8 @@ require_relative 'command'
 module IOSParser
   class IOS
     class Document
-      include Queryable, Enumerable
+      include Enumerable
+      include Queryable
       attr_accessor :commands, :parent, :source
 
       def initialize(source)

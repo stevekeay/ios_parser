@@ -12,7 +12,7 @@ module IOSParser
     end
   rescue LoadError
     require 'ios_parser/lexer'
-    return PureLexer
+    PureLexer
   end
 
   Lexer = lexer

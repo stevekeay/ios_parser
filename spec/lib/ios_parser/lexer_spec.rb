@@ -12,14 +12,14 @@ module IOSParser
       end
 
       context 'indented region' do
-        let(:input) { <<-END }
-policy-map mypolicy_in
- class myservice_service
-  police 300000000 1000000 exceed-action policed-dscp-transmit
-   set dscp cs1
- class other_service
-  police 600000000 1000000 exceed-action policed-dscp-transmit
-   set dscp cs2
+        let(:input) { <<-END.unindent }
+          policy-map mypolicy_in
+           class myservice_service
+            police 300000000 1000000 exceed-action policed-dscp-transmit
+             set dscp cs1
+           class other_service
+            police 600000000 1000000 exceed-action policed-dscp-transmit
+             set dscp cs2
 END
 
         let(:output) do
@@ -50,16 +50,16 @@ END
 
       context 'ASR indented regions' do
         context 'indented region' do
-          let(:input) { <<-END }
-router static
- vrf MGMT
-  address-family ipv4 unicast
-   0.0.0.0/0 1.2.3.4
-  !
- !
-!
-router ospf 12345
- nsr
+          let(:input) { <<-END.unindent }
+            router static
+             vrf MGMT
+              address-family ipv4 unicast
+               0.0.0.0/0 1.2.3.4
+              !
+             !
+            !
+            router ospf 12345
+             nsr
 END
 
           let(:expectation) do
@@ -87,12 +87,12 @@ END
 
       context 'banners' do
         let(:input) do
-          <<-END
-banner foobar ^
-asdf 1234 9786 asdf
-line 2
-line 3
-  ^
+          <<-END.unindent
+            banner foobar ^
+            asdf 1234 9786 asdf
+            line 2
+            line 3
+              ^
 END
         end
 
@@ -144,14 +144,14 @@ END
 
       context 'cryptographic certificate' do
         let(:input) do
-          <<END
-crypto pki certificate chain TP-self-signed-0123456789
- certificate self-signed 01
-  FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-  EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE
-  DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD AAAA
-        quit
-!
+          <<END.unindent
+            crypto pki certificate chain TP-self-signed-0123456789
+             certificate self-signed 01
+              FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
+              EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE
+              DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD AAAA
+                    quit
+            !
 END
         end
 
@@ -193,11 +193,11 @@ END
       end
 
       context 'quoted octothorpe' do
-        let(:input) { <<-EOS }
-vlan 1
- name "a #"
-vlan 2
- name d
+        let(:input) { <<-EOS.unindent }
+          vlan 1
+           name "a #"
+          vlan 2
+           name d
       EOS
 
         let(:output) do
@@ -231,10 +231,10 @@ vlan 2
 
       context 'partial dedent' do
         let(:input) do
-          <<END
-class-map match-any foobar
-  description blahblahblah
- match access-group fred
+          <<END.unindent
+            class-map match-any foobar
+              description blahblahblah
+             match access-group fred
 END
         end
 

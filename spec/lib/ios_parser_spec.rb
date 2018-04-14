@@ -4,36 +4,36 @@ require 'ios_parser'
 describe IOSParser do
   describe '.parse' do
     context 'indented region' do
-      let(:input) { <<-END }
-policy-map mypolicy_in
- class myservice_service
-  police 300000000 1000000 exceed-action policed-dscp-transmit
-   set dscp cs1
- class other_service
-  police 600000000 1000000 exceed-action policed-dscp-transmit
-   set dscp cs2
-   command_with_no_args
-END
+      let(:input) { <<-END.unindent }
+        policy-map mypolicy_in
+         class myservice_service
+          police 300000000 1000000 exceed-action policed-dscp-transmit
+           set dscp cs1
+         class other_service
+          police 600000000 1000000 exceed-action policed-dscp-transmit
+           set dscp cs2
+           command_with_no_args
+      END
 
       let(:output) do
         {
           commands:
             [{ args: ['policy-map', 'mypolicy_in'],
                commands:
-                 [{ args: %w(class myservice_service),
+                 [{ args: %w[class myservice_service],
                     commands: [{ args: ['police', 300_000_000, 1_000_000,
                                         'exceed-action',
                                         'policed-dscp-transmit'],
-                                 commands: [{ args: %w(set dscp cs1),
+                                 commands: [{ args: %w[set dscp cs1],
                                               commands: [], pos: 114 }],
                                  pos: 50 }],
                     pos: 24 },
 
-                  { args: %w(class other_service),
+                  { args: %w[class other_service],
                     commands: [{ args: ['police', 600_000_000, 1_000_000,
                                         'exceed-action',
                                         'policed-dscp-transmit'],
-                                 commands: [{ args: %w(set dscp cs2),
+                                 commands: [{ args: %w[set dscp cs2],
                                               commands: [], pos: 214 },
                                             { args: ['command_with_no_args'],
                                               commands: [], pos: 230 }],
@@ -53,11 +53,11 @@ END
 
     context 'partial outdent' do
       let(:input) do
-        <<END
-class-map match-any foobar
-  description blah blah blah
- match access-group fred
-END
+        <<-END.unindent
+        class-map match-any foobar
+          description blah blah blah
+         match access-group fred
+        END
       end
 
       let(:output) do
@@ -68,7 +68,7 @@ END
                 args: ['class-map', 'match-any', 'foobar'],
                 commands: [
                   {
-                    args: %w(description blah blah blah),
+                    args: %w[description blah blah blah],
                     commands: [],
                     pos: 29
                   },
