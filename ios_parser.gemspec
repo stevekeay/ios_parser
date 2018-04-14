@@ -19,5 +19,5 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'rake-compiler', '~>0.9'
   s.add_development_dependency 'rspec', '~>3.2'
-  s.add_development_dependency 'rubocop', '~>0.54'
+  s.add_development_dependency 'rubocop', '~> 0.54' if RUBY_VERSION > '2.1'
 end
