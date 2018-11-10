@@ -13,7 +13,9 @@ Gem::Specification.new do |s|
   s.files       = `git ls-files`.split("\n")
   s.test_files  = `git ls-files -- {spec,features}/*`.split("\n")
 
-  unless RUBY_ENGINE == 'jruby'
+  if RUBY_PLATFORM == 'java'
+    s.platform = 'java'
+  else
     s.extensions << 'ext/ios_parser/c_lexer/extconf.rb'
   end
 
