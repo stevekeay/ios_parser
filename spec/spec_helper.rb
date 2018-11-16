@@ -1,5 +1,9 @@
 $LOAD_PATH << File.dirname(__FILE__) + '/../lib'
 
+RSpec.configure do |rspec|
+  rspec.filter_run_when_matching(focus: true)
+end
+
 def klass
   described_class
 end

@@ -65,8 +65,10 @@ module IOSParser
 
     def comment
       self.state = :comment
-      update_indentation
-      self.state = :root if newline?
+      return unless newline?
+      delimit
+      self.state = :line_start
+      self.indent = 0
     end
 
     def comment?
