@@ -285,6 +285,35 @@ END
           expect { subject }.to raise_error(pattern)
         end
       end
+
+      context 'subcommands separated by comment line' do
+        let(:input) do
+          <<-END.unindent
+            router static
+             address-family ipv4 unicast
+             !
+             address-family ipv6 unicast
+          END
+        end
+
+        let(:expected) do
+          [
+            'router', 'static', :EOL,
+            :INDENT,
+            'address-family', 'ipv4', 'unicast', :EOL,
+            'address-family', 'ipv6', 'unicast', :EOL,
+            :DEDENT
+          ]
+        end
+
+        it 'lexes both subcommands' do
+          expect(subject.map(&:last)).to eq expected
+        end
+
+        it 'lexes both subcommands (with the pure ruby lexer)' do
+          expect(subject_pure.map(&:last)).to eq expected
+        end
+      end
     end
   end
 end
