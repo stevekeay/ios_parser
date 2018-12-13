@@ -54,7 +54,7 @@ module IOSParser
     def arguments
       [].tap do |args|
         until tokens.empty? || tokens.first.last == :EOL
-          _, arg = tokens.shift
+          _, _, arg = tokens.shift
           args << arg unless arguments_to_discard.include?(arg)
         end
         tokens.shift # discard :EOL

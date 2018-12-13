@@ -3,6 +3,7 @@ module IOSParser
     LexError = IOSParser::LexError
 
     attr_accessor :tokens, :token, :indents, :indent, :state, :char,
+                  :line, :token_line,
                   :string_terminator
 
     def initialize
@@ -14,6 +15,8 @@ module IOSParser
       @state   = :root
       @token_char = 0
       @this_char  = -1
+      @line = 1
+      @token_line = 0
     end
 
     def call(input_text)
@@ -60,7 +63,7 @@ module IOSParser
     def make_token(value, pos: nil)
       pos ||= @token_start || @this_char
       @token_start = nil
-      [pos, value]
+      [pos, line, value]
     end
 
     def comment
@@ -69,6 +72,7 @@ module IOSParser
       delimit
       self.state = :line_start
       self.indent = 0
+      self.line += 1
     end
 
     def comment?
@@ -81,9 +85,13 @@ module IOSParser
 
     def banner_begin
       self.state = :banner
+      self.token_line = 0
       tokens << make_token(:BANNER_BEGIN)
       @token_start = @this_char + 2
       @banner_delimiter = char == "\n" ? 'EOF' : char
+      return unless @text[@this_char + 1] == "\n"
+      self.token_line -= 1
+      self.line += 1
     end
 
     def banner_begin?
@@ -91,6 +99,8 @@ module IOSParser
     end
 
     def banner
+      self.token_line += 1 if newline?
+
       if banner_end_char?
         banner_end_char
       elsif banner_end_string?
@@ -103,7 +113,9 @@ module IOSParser
     def banner_end_string
       self.state = :root
       token.chomp!(@banner_delimiter[0..-2])
-      tokens << make_token(token) << make_token(:BANNER_END)
+      tokens << make_token(token)
+      self.line += token_line
+      tokens << make_token(:BANNER_END)
       self.token = ''
     end
 
@@ -114,7 +126,9 @@ module IOSParser
     def banner_end_char
       self.state = :root
       banner_end_clean_token
-      tokens << make_token(token) << make_token(:BANNER_END)
+      tokens << make_token(token)
+      self.line += token_line
+      tokens << make_token(:BANNER_END)
       self.token = ''
     end
 
@@ -148,30 +162,43 @@ module IOSParser
       self.state = :certificate
       indents.pop
       tokens[-2..-1] = [make_token(:CERTIFICATE_BEGIN, pos: tokens[-1][0])]
+      self.token_line = 0
       certificate
     end
 
     def certificate
-      token[-5..-1] == "quit\n" ? certificate_end : token << char
+      if token.end_with?("quit\n")
+        certificate_end
+      else
+        self.token_line += 1 if char == "\n"
+        token << char
+      end
     end
 
     def certificate_end
       tokens.concat certificate_end_tokens
+      self.line += 1
       update_indentation
       @token_start = @this_char
 
       @token = ''
       self.state = :line_start
       self.indent = 0
+      self.line += 1
       root
     end
 
     def certificate_end_tokens
-      [
-        make_token(token[0..-6].gsub!(/\s+/, ' ').strip, pos: tokens[-1][0]),
-        make_token(:CERTIFICATE_END, pos: @this_char),
-        make_token(:EOL, pos: @this_char)
-      ]
+      cluster = []
+      cluster << make_token(certificate_token_value, pos: tokens[-1][0])
+      self.line += self.token_line - 1
+      cluster << make_token(:CERTIFICATE_END, pos: @this_char)
+      cluster << make_token(:EOL, pos: @this_char)
+      cluster
+    end
+
+    def certificate_token_value
+      token[0..-6].gsub!(/\s+/, ' ').strip
     end
 
     def integer
@@ -268,6 +295,7 @@ module IOSParser
       self.state = :line_start
       self.indent = 0
       tokens << make_token(:EOL)
+      self.line += 1
     end
 
     def newline?
@@ -321,6 +349,7 @@ module IOSParser
       end
 
       delimit
+      self.line -= 1
       update_indentation
       scrub_banner_garbage
       tokens

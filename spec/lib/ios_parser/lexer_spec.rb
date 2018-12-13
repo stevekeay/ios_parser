@@ -97,9 +97,10 @@ END
         end
 
         let(:output) do
-          [[0, 'banner'], [7, 'foobar'], [14, :BANNER_BEGIN],
-           [16, "asdf 1234 9786 asdf\nline 2\nline 3\n  "],
-           [52, :BANNER_END], [53, :EOL]]
+          [[0, 1, 'banner'], [7, 1, 'foobar'],
+           [14, 1, :BANNER_BEGIN],
+           [16, 2, "asdf 1234 9786 asdf\nline 2\nline 3\n  "],
+           [52, 5, :BANNER_END], [53, 5, :EOL]]
         end
 
         it('tokenized and enclosed in symbols') { should == output }
@@ -156,29 +157,32 @@ END
         end
 
         let(:output) do
-          [[0, 'crypto'],
-           [7, 'pki'],
-           [11, 'certificate'],
-           [23, 'chain'],
-           [29, 'TP-self-signed-0123456789'],
-           [54, :EOL],
-           [56, :INDENT],
-           [56, 'certificate'],
-           [68, 'self-signed'],
-           [80, '01'],
-           [85, :CERTIFICATE_BEGIN],
-           [85,
+          [[0, 1, 'crypto'],
+           [7, 1, 'pki'],
+           [11, 1, 'certificate'],
+           [23, 1, 'chain'],
+           [29, 1, 'TP-self-signed-0123456789'],
+           [54, 1, :EOL],
+           [56, 2, :INDENT],
+           [56, 2, 'certificate'],
+           [68, 2, 'self-signed'],
+           [80, 2, '01'],
+           [85, 3, :CERTIFICATE_BEGIN],
+           [85, 3,
             'FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF '\
             'FFFFFFFF EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE EEEEEEEE '\
             'EEEEEEEE EEEEEEEE DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD '\
             'DDDDDDDD DDDDDDDD DDDDDDDD AAAA'],
-           [323, :CERTIFICATE_END],
-           [323, :EOL],
-           [323, :DEDENT]]
+           [323, 6, :CERTIFICATE_END],
+           [323, 6, :EOL],
+           [323, 7, :DEDENT]]
         end
 
         subject { klass.new.call(input) }
-        it('tokenized') { expect(subject).to eq output }
+
+        it('tokenized') do
+          expect(subject).to eq output
+        end
 
         it('tokenized (using the pure ruby lexer)') do
           expect(subject_pure).to eq output
@@ -219,11 +223,11 @@ END
         let(:input) { 'switchport trunk allowed vlan 50-90' }
         let(:output) do
           [
-            [0, 'switchport'],
-            [11, 'trunk'],
-            [17, 'allowed'],
-            [25, 'vlan'],
-            [30, '50-90']
+            [0,  1, 'switchport'],
+            [11, 1, 'trunk'],
+            [17, 1, 'allowed'],
+            [25, 1, 'vlan'],
+            [30, 1, '50-90']
           ]
         end
         it { should == output }
@@ -297,12 +301,19 @@ END
         end
 
         let(:expected) do
+          expected_full.map(&:last)
+        end
+
+        let(:expected_full) do
           [
-            'router', 'static', :EOL,
-            :INDENT,
-            'address-family', 'ipv4', 'unicast', :EOL,
-            'address-family', 'ipv6', 'unicast', :EOL,
-            :DEDENT
+            [0, 1, 'router'], [7, 1, 'static'],
+            [13, 1, :EOL],
+            [15, 2, :INDENT],
+            [15, 2, 'address-family'], [30, 2, 'ipv4'], [35, 2, 'unicast'],
+            [42, 2, :EOL],
+            [47, 4, 'address-family'], [62, 4, 'ipv6'], [67, 4, 'unicast'],
+            [74, 4, :EOL],
+            [74, 4, :DEDENT]
           ]
         end
 
@@ -312,6 +323,14 @@ END
 
         it 'lexes both subcommands (with the pure ruby lexer)' do
           expect(subject_pure.map(&:last)).to eq expected
+        end
+
+        it 'lexes position and line' do
+          expect(subject).to eq expected_full
+        end
+
+        it 'lexes position and line (with the pure ruby lexer)' do
+          expect(subject_pure).to eq expected_full
         end
       end
     end
