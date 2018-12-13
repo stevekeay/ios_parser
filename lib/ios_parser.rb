@@ -1,4 +1,5 @@
 require 'json'
+require 'ios_parser/token'
 
 module IOSParser
   class LexError < StandardError; end

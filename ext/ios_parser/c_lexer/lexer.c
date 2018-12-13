@@ -2,6 +2,7 @@
 
 static VALUE rb_mIOSParser;
 static VALUE rb_cCLexer;
+static VALUE rb_cToken;
 VALUE rb_eLexError;
 
 typedef enum lex_token_state {
@@ -48,14 +49,16 @@ typedef struct LexInfo LexInfo;
 
 #define CURRENT_CHAR(LEX) LEX->text[LEX->pos]
 #define TOKEN_EMPTY(LEX) LEX->token_length <= 0
-#define TOKEN_VALUE(TOK) rb_ary_entry(TOK, 2)
+#define TOKEN_VALUE(TOK) RSTRUCT_GET(TOK, 0)
 
-#define MAKE_TOKEN(LEX, TOK) rb_ary_new3(3, rb_int_new(LEX->token_start), rb_int_new(LEX->line), TOK)
-#define ADD_TOKEN(LEX, TOK) rb_ary_push(LEX->tokens, MAKE_TOKEN(LEX, TOK))
+#define ADD_TOKEN(LEX, TOK) rb_ary_push(LEX->tokens, make_token(LEX, TOK))
 
 #define CMD_LEN(CMD) (sizeof(CMD) - 1)
+
+static VALUE make_token(LexInfo *lex, VALUE tok);
+
 int is_certificate(LexInfo *lex) {
-    VALUE indent_ary, indent, command_ary, command;
+    VALUE indent_token, indent, command_token, command;
     int token_count, indent_pos, command_pos;
 
     token_count = RARRAY_LEN(lex->tokens);
@@ -65,16 +68,15 @@ int is_certificate(LexInfo *lex) {
     command_pos = token_count - 5;
     if (command_pos < 0) { return 0; }
 
-    indent_ary = rb_ary_entry(lex->tokens, indent_pos);
-    indent = TOKEN_VALUE(indent_ary);
+    indent_token = rb_ary_entry(lex->tokens, indent_pos);
+    indent = TOKEN_VALUE(indent_token);
     if (TYPE(indent) != T_SYMBOL) { return 0; }
     if (rb_intern("INDENT") != SYM2ID(indent)) { return 0; }
 
-    command_ary = rb_ary_entry(lex->tokens, command_pos);
-    if (TYPE(command_ary) != T_ARRAY) { return 0; }
-    if (RARRAY_LEN(command_ary) < 2) { return 0; }
+    command_token = rb_ary_entry(lex->tokens, command_pos);
+    if (TYPE(command_token) != T_STRUCT) { return 0; }
 
-    command = TOKEN_VALUE(command_ary);
+    command = TOKEN_VALUE(command_token);
     if (TYPE(command) != T_STRING) { return 0; }
 
     StringValue(command);
@@ -149,6 +151,10 @@ static void delimit(LexInfo *lex) {
 
 static void deallocate(void * lex) {
     xfree(lex);
+}
+
+static VALUE make_token(LexInfo *lex, VALUE tok) {
+    return rb_struct_new(rb_cToken, tok, rb_int_new(lex->token_start), rb_int_new(lex->line));
 }
 
 static void mark(void *ptr) {
@@ -522,6 +528,7 @@ void Init_c_lexer() {
     rb_cCLexer = rb_define_class_under(rb_mIOSParser, "CLexer", rb_cObject);
     rb_eLexError = rb_define_class_under(rb_mIOSParser, "LexError",
                                          rb_eStandardError);
+    rb_cToken = rb_path2class("IOSParser::Token");
     rb_define_alloc_func(rb_cCLexer, allocate);
     rb_define_method(rb_cCLexer, "initialize", initialize, 0);
     rb_define_method(rb_cCLexer, "call", call, 1);

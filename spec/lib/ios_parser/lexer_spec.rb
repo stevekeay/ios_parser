@@ -40,11 +40,11 @@ END
            'set', 'dscp', 'cs2', :EOL, :DEDENT, :DEDENT, :DEDENT]
         end
 
-        subject { klass.new.call(input).map(&:last) }
+        subject { klass.new.call(input).map(&:value) }
         it('enclosed in symbols') { should == output }
 
         it('enclosed in symbols (using the pure ruby lexer)') do
-          expect(subject_pure.map(&:last)).to eq output
+          expect(subject_pure.map(&:value)).to eq output
         end
       end
 
@@ -75,12 +75,12 @@ END
 
           it 'pure' do
             tokens = IOSParser::PureLexer.new.call(input)
-            expect(tokens.map(&:last)).to eq expectation
+            expect(tokens.map(&:value)).to eq expectation
           end # it 'pure' do
 
           it 'default' do
             tokens = IOSParser.lexer.new.call(input)
-            expect(tokens.map(&:last)).to eq expectation
+            expect(tokens.map(&:value)).to eq expectation
           end # it 'c' do
         end # context 'indented region' do
       end # context 'ASR indented regions' do
@@ -101,6 +101,7 @@ END
            [14, 1, :BANNER_BEGIN],
            [16, 2, "asdf 1234 9786 asdf\nline 2\nline 3\n  "],
            [52, 5, :BANNER_END], [53, 5, :EOL]]
+            .map { |pos, line, val| Token.new(val, pos, line) }
         end
 
         it('tokenized and enclosed in symbols') { should == output }
@@ -120,8 +121,8 @@ END
           ['banner', 'exec', :BANNER_BEGIN, content, :BANNER_END, :EOL]
         end
 
-        it { expect(subject.map(&:last)).to eq output }
-        it { expect(subject_pure.map(&:last)).to eq output }
+        it { expect(subject.map(&:value)).to eq output }
+        it { expect(subject_pure.map(&:value)).to eq output }
       end
 
       context 'complex eos banner' do
@@ -132,14 +133,14 @@ END
           ['banner', 'motd', :BANNER_BEGIN, content, :BANNER_END, :EOL]
         end
 
-        it { expect(subject.map(&:last)).to eq output }
-        it { expect(subject_pure.map(&:last)).to eq output }
+        it { expect(subject.map(&:value)).to eq output }
+        it { expect(subject_pure.map(&:value)).to eq output }
       end
 
       context 'decimal number' do
         let(:input) { 'boson levels at 93.2' }
         let(:output) { ['boson', 'levels', 'at', 93.2] }
-        subject { klass.new.call(input).map(&:last) }
+        subject { klass.new.call(input).map(&:value) }
         it('converts to Float') { should == output }
       end
 
@@ -176,6 +177,7 @@ END
            [323, 6, :CERTIFICATE_END],
            [323, 6, :EOL],
            [323, 7, :DEDENT]]
+            .map { |pos, line, val| Token.new(val, pos, line) }
         end
 
         subject { klass.new.call(input) }
@@ -192,7 +194,7 @@ END
       context 'comments' do
         let(:input) { 'ip addr 127.0.0.0.1 ! asdfsdf' }
         let(:output) { ['ip', 'addr', '127.0.0.0.1'] }
-        subject { klass.new.call(input).map(&:last) }
+        subject { klass.new.call(input).map(&:value) }
         it('dropped') { should == output }
       end
 
@@ -215,8 +217,8 @@ END
           ]
         end
 
-        it { expect(subject_pure.map(&:last)).to eq output }
-        it { expect(subject.map(&:last)).to eq output }
+        it { expect(subject_pure.map(&:value)).to eq output }
+        it { expect(subject.map(&:value)).to eq output }
       end # context 'quoted octothorpe' do
 
       context 'vlan range' do
@@ -228,7 +230,7 @@ END
             [17, 1, 'allowed'],
             [25, 1, 'vlan'],
             [30, 1, '50-90']
-          ]
+          ].map { |pos, line, val| Token.new(val, pos, line) }
         end
         it { should == output }
       end # context 'vlan range' do
@@ -251,31 +253,31 @@ END
           ]
         end
 
-        it { expect(subject_pure.map(&:last)).to eq output }
+        it { expect(subject_pure.map(&:value)).to eq output }
       end
 
       context '# in the middle of a line is not a comment' do
         let(:input) { "vlan 1\n name #31337" }
         let(:output) { ['vlan', 1, :EOL, :INDENT, 'name', '#31337', :DEDENT] }
 
-        it { expect(subject_pure.map(&:last)).to eq output }
-        it { expect(subject.map(&:last)).to eq output }
+        it { expect(subject_pure.map(&:value)).to eq output }
+        it { expect(subject.map(&:value)).to eq output }
       end
 
       context '# at the start of a line is a comment' do
         let(:input) { "vlan 1\n# comment\nvlan 2" }
         let(:output) { ['vlan', 1, :EOL, 'vlan', 2] }
 
-        it { expect(subject_pure.map(&:last)).to eq output }
-        it { expect(subject.map(&:last)).to eq output }
+        it { expect(subject_pure.map(&:value)).to eq output }
+        it { expect(subject.map(&:value)).to eq output }
       end
 
       context '# after indentation is a comment' do
         let(:input) { "vlan 1\n # comment\nvlan 2" }
         let(:output) { ['vlan', 1, :EOL, :INDENT, :DEDENT, 'vlan', 2] }
 
-        it { expect(subject_pure.map(&:last)).to eq output }
-        it { expect(subject.map(&:last)).to eq output }
+        it { expect(subject_pure.map(&:value)).to eq output }
+        it { expect(subject.map(&:value)).to eq output }
       end
 
       context 'unterminated quoted string' do
@@ -301,7 +303,7 @@ END
         end
 
         let(:expected) do
-          expected_full.map(&:last)
+          expected_full.map(&:value)
         end
 
         let(:expected_full) do
@@ -314,15 +316,15 @@ END
             [47, 4, 'address-family'], [62, 4, 'ipv6'], [67, 4, 'unicast'],
             [74, 4, :EOL],
             [74, 4, :DEDENT]
-          ]
+          ].map { |pos, line, val| Token.new(val, pos, line) }
         end
 
         it 'lexes both subcommands' do
-          expect(subject.map(&:last)).to eq expected
+          expect(subject.map(&:value)).to eq expected
         end
 
         it 'lexes both subcommands (with the pure ruby lexer)' do
-          expect(subject_pure.map(&:last)).to eq expected
+          expect(subject_pure.map(&:value)).to eq expected
         end
 
         it 'lexes position and line' do

@@ -63,7 +63,7 @@ module IOSParser
     def make_token(value, pos: nil)
       pos ||= @token_start || @this_char
       @token_start = nil
-      [pos, line, value]
+      Token.new(value, pos, line)
     end
 
     def comment
@@ -95,7 +95,7 @@ module IOSParser
     end
 
     def banner_begin?
-      tokens[-2] && tokens[-2].last == 'banner'
+      tokens[-2] && tokens[-2].value == 'banner'
     end
 
     def banner
@@ -150,18 +150,18 @@ module IOSParser
     end
 
     def banner_garbage?(pos)
-      tokens[pos].last == :BANNER_END && tokens[pos + 1].last == 'C'
+      tokens[pos].value == :BANNER_END && tokens[pos + 1].value == 'C'
     end
 
     def certificate_begin?
-      tokens[-6] && tokens[-6].last == :INDENT &&
-        tokens[-5] && tokens[-5].last == 'certificate'
+      tokens[-6] && tokens[-6].value == :INDENT &&
+        tokens[-5] && tokens[-5].value == 'certificate'
     end
 
     def certificate_begin
       self.state = :certificate
       indents.pop
-      tokens[-2..-1] = [make_token(:CERTIFICATE_BEGIN, pos: tokens[-1][0])]
+      tokens[-2..-1] = [make_token(:CERTIFICATE_BEGIN, pos: tokens[-1].pos)]
       self.token_line = 0
       certificate
     end
@@ -190,7 +190,7 @@ module IOSParser
 
     def certificate_end_tokens
       cluster = []
-      cluster << make_token(certificate_token_value, pos: tokens[-1][0])
+      cluster << make_token(certificate_token_value, pos: tokens[-1].pos)
       self.line += self.token_line - 1
       cluster << make_token(:CERTIFICATE_END, pos: @this_char)
       cluster << make_token(:EOL, pos: @this_char)
@@ -264,7 +264,7 @@ module IOSParser
 
     def space
       delimit
-      self.indent += 1 if tokens.last && tokens.last.last == :EOL
+      self.indent += 1 if tokens.last && tokens.last.value == :EOL
     end
 
     def space?
