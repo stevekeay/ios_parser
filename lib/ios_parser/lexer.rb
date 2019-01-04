@@ -3,7 +3,7 @@ module IOSParser
     LexError = IOSParser::LexError
 
     attr_accessor :tokens, :token, :indents, :indent, :state, :char,
-                  :line, :token_line,
+                  :line, :start_of_line, :token_line,
                   :string_terminator
 
     def initialize
@@ -13,9 +13,9 @@ module IOSParser
       @indent  = 0
       @indents = [0]
       @state   = :root
-      @token_char = 0
-      @this_char  = -1
+      @this_char = -1
       @line = 1
+      @start_of_line = 0
       @token_line = 0
     end
 
@@ -60,16 +60,29 @@ module IOSParser
       end
     end
 
-    def make_token(value, pos: nil)
+    def make_token(value, pos: nil, col: nil)
       pos ||= @token_start || @this_char
+      col ||= pos - start_of_line + 1
       @token_start = nil
-      Token.new(value, pos, line)
+      Token.new(value, pos, line, col)
+    end
+
+    def find_start_of_line(from: @this_char)
+      from.downto(0) do |pos|
+        if @text[pos] == "\n"
+          self.start_of_line = pos + 1
+          return start_of_line
+        end
+      end
+
+      self.line_start = 0
     end
 
     def comment
       self.state = :comment
       return unless newline?
       delimit
+      self.start_of_line = @this_char + 1
       self.state = :line_start
       self.indent = 0
       self.line += 1
@@ -115,6 +128,7 @@ module IOSParser
       token.chomp!(@banner_delimiter[0..-2])
       tokens << make_token(token)
       self.line += token_line
+      find_start_of_line
       tokens << make_token(:BANNER_END)
       self.token = ''
     end
@@ -128,6 +142,7 @@ module IOSParser
       banner_end_clean_token
       tokens << make_token(token)
       self.line += token_line
+      find_start_of_line
       tokens << make_token(:BANNER_END)
       self.token = ''
     end
@@ -188,14 +203,19 @@ module IOSParser
       root
     end
 
+    # rubocop: disable AbcSize
     def certificate_end_tokens
       cluster = []
       cluster << make_token(certificate_token_value, pos: tokens[-1].pos)
       self.line += self.token_line - 1
-      cluster << make_token(:CERTIFICATE_END, pos: @this_char)
-      cluster << make_token(:EOL, pos: @this_char)
+      cluster << make_token(:CERTIFICATE_END, pos: @this_char, col: 1)
+      find_start_of_line(from: @this_char - 2)
+      cluster << make_token(:EOL,
+                            pos: @this_char,
+                            col: @this_char - start_of_line)
       cluster
     end
+    # rubocop: enable AbcSize
 
     def certificate_token_value
       token[0..-6].gsub!(/\s+/, ' ').strip
@@ -295,6 +315,7 @@ module IOSParser
       self.state = :line_start
       self.indent = 0
       tokens << make_token(:EOL)
+      self.start_of_line = @this_char + 1
       self.line += 1
     end
 
@@ -332,7 +353,14 @@ module IOSParser
     end
 
     def pop_dedent
-      tokens << make_token(:DEDENT)
+      col =
+        if tokens.last.line == line
+          tokens.last.col
+        else
+          1
+        end
+
+      tokens << make_token(:DEDENT, col: col)
       indents.pop
     end
 

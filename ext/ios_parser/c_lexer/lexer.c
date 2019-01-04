@@ -23,6 +23,7 @@ struct LexInfo {
     size_t token_start;
     size_t token_length;
     size_t line;
+    size_t start_of_line;
     size_t token_line;
     lex_token_state token_state;
     VALUE tokens;
@@ -154,7 +155,11 @@ static void deallocate(void * lex) {
 }
 
 static VALUE make_token(LexInfo *lex, VALUE tok) {
-    return rb_struct_new(rb_cToken, tok, rb_int_new(lex->token_start), rb_int_new(lex->line));
+    return rb_struct_new(rb_cToken,
+                         tok,
+                         rb_int_new(lex->token_start),
+                         rb_int_new(lex->line),
+                         rb_int_new(lex->token_start - lex->start_of_line + 1));
 }
 
 static void mark(void *ptr) {
@@ -174,6 +179,7 @@ static VALUE initialize(VALUE self, VALUE input_text) {
     lex->text = NULL;
     lex->pos = 0;
     lex->line = 1;
+    lex->start_of_line = 0;
     lex->token_line = 0;
     lex->token_start = 0;
     lex->token_length = 0;
@@ -190,6 +196,22 @@ static VALUE initialize(VALUE self, VALUE input_text) {
 static void process_root(LexInfo * lex);
 static void process_start_of_line(LexInfo * lex);
 static void start_banner(LexInfo * lex);
+
+static void find_start_of_line(LexInfo *lex, size_t from) {
+    size_t pos = from;
+
+    for (;;) {
+        if (IS_NEWLINE(lex->text[pos])) {
+            lex->start_of_line = pos + 1;
+            return;
+        } else if (pos <= 0) {
+            lex->start_of_line = 0;
+            return;
+        } else {
+            pos--;
+        }
+    }
+}
 
 static void process_newline(LexInfo *lex) {
     delimit(lex);
@@ -311,9 +333,18 @@ static void process_certificate(LexInfo *lex) {
 
         lex->token_start = lex->pos;
         lex->line = lex->line + lex->token_line - 1;
+        find_start_of_line(lex, lex->pos);
         ADD_TOKEN(lex, ID2SYM(rb_intern("CERTIFICATE_END")));
 
-        process_newline(lex);
+        find_start_of_line(lex, lex->pos - 2);
+        lex->start_of_line++;
+        lex->token_start = lex->pos;
+        ADD_TOKEN(lex, ID2SYM(rb_intern("EOL")));
+
+        lex->token_state = LEX_STATE_INDENT;
+        lex->indent = 0;
+        lex->line = lex->line + 1;
+
         process_start_of_line(lex);
     } else {
         if (IS_NEWLINE(CURRENT_CHAR(lex))) {
@@ -352,6 +383,7 @@ static void process_banner(LexInfo *lex) {
         delimit(lex);
         lex->token_start = lex->pos;
         lex->line = lex->line + lex->token_line;
+        find_start_of_line(lex, lex->pos);
         ADD_TOKEN(lex, ID2SYM(rb_intern("BANNER_END")));
         if (lex->text[lex->pos + 1] == 'C') { lex->pos++; }
     } else if (!lex->banner_delimiter && is_banner_end_string(lex)) {
@@ -359,6 +391,7 @@ static void process_banner(LexInfo *lex) {
         delimit(lex);
         lex->token_start = lex->pos;
         lex->line = lex->line + lex->token_line;
+        find_start_of_line(lex, lex->pos);
         ADD_TOKEN(lex, ID2SYM(rb_intern("BANNER_END")));
     } else {
       if (IS_NEWLINE(lex->text[lex->pos + lex->token_length])) {
@@ -378,6 +411,10 @@ static void start_banner(LexInfo *lex) {
 
 static void process_start_of_line(LexInfo *lex) {
     char c = CURRENT_CHAR(lex);
+
+    if (lex->indent == 0) {
+        lex->start_of_line = lex->pos;
+    }
 
     if (IS_SPACE(c)) {
         lex->indent++;
