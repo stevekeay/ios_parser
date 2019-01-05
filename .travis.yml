@@ -14,4 +14,4 @@ matrix:
       env: JRUBY_OPTS='-Xcompat.version=2.0'
 bundler_args: --without guard
 before_install:
-  - if [ "jruby" != "$TRAVIS_RUBY_VERSION"  ]; then gem install bundler --without guard; fi
+  - if [ "jruby" != "$TRAVIS_RUBY_VERSION"  ]; then gem i rubygems-update -v '<3' && update_rubygems; gem install bundler -v 1.17.3 --without guard; fi
