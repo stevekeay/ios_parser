@@ -38,15 +38,11 @@ module IOSParser
       end
     end
 
-    # rubocop: disable MethodLength
     def command(parent = nil, document = nil)
-      pos = tokens.first.pos
-
       opts = {
-        args: arguments,
+        tokens: command_tokens,
         parent: parent,
         document: document,
-        pos: pos,
         indent: @indent
       }
 
@@ -54,7 +50,16 @@ module IOSParser
         cmd.commands = subsections(cmd)
       end
     end
-    # rubocop: enable MethodLength
+
+    def command_tokens
+      toks = []
+      until tokens.empty? || tokens.first.value == :EOL
+        tok = tokens.shift
+        toks << tok unless argument_to_discard?(tok.value)
+      end
+      tokens.shift # discard :EOL
+      toks
+    end
 
     def argument_to_discard?(arg)
       arguments_to_discard.include?(arg)
@@ -64,16 +69,6 @@ module IOSParser
       [:INDENT, :DEDENT,
        :CERTIFICATE_BEGIN, :CERTIFICATE_END,
        :BANNER_BEGIN, :BANNER_END]
-    end
-
-    def arguments
-      args = []
-      until tokens.empty? || tokens.first.value == :EOL
-        arg = tokens.shift.value
-        args << arg unless argument_to_discard?(arg)
-      end
-      tokens.shift # discard :EOL
-      args
     end
 
     def subsections(parent = nil)
