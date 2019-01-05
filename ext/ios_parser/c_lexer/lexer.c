@@ -2,6 +2,7 @@
 
 static VALUE rb_mIOSParser;
 static VALUE rb_cCLexer;
+static VALUE rb_cToken;
 VALUE rb_eLexError;
 
 typedef enum lex_token_state {
@@ -21,6 +22,9 @@ struct LexInfo {
     size_t pos;
     size_t token_start;
     size_t token_length;
+    size_t line;
+    size_t start_of_line;
+    size_t token_line;
     lex_token_state token_state;
     VALUE tokens;
     int indent;
@@ -46,13 +50,16 @@ typedef struct LexInfo LexInfo;
 
 #define CURRENT_CHAR(LEX) LEX->text[LEX->pos]
 #define TOKEN_EMPTY(LEX) LEX->token_length <= 0
+#define TOKEN_VALUE(TOK) RSTRUCT_GET(TOK, 0)
 
-#define MAKE_TOKEN(LEX, TOK) rb_ary_new3(2, rb_int_new(LEX->token_start), TOK)
-#define ADD_TOKEN(LEX, TOK) rb_ary_push(LEX->tokens, MAKE_TOKEN(LEX, TOK))
+#define ADD_TOKEN(LEX, TOK) rb_ary_push(LEX->tokens, make_token(LEX, TOK))
 
 #define CMD_LEN(CMD) (sizeof(CMD) - 1)
+
+static VALUE make_token(LexInfo *lex, VALUE tok);
+
 int is_certificate(LexInfo *lex) {
-    VALUE indent_ary, indent, command_ary, command;
+    VALUE indent_token, indent, command_token, command;
     int token_count, indent_pos, command_pos;
 
     token_count = RARRAY_LEN(lex->tokens);
@@ -62,16 +69,15 @@ int is_certificate(LexInfo *lex) {
     command_pos = token_count - 5;
     if (command_pos < 0) { return 0; }
 
-    indent_ary = rb_ary_entry(lex->tokens, indent_pos);
-    indent = rb_ary_entry(indent_ary, 1);
+    indent_token = rb_ary_entry(lex->tokens, indent_pos);
+    indent = TOKEN_VALUE(indent_token);
     if (TYPE(indent) != T_SYMBOL) { return 0; }
     if (rb_intern("INDENT") != SYM2ID(indent)) { return 0; }
 
-    command_ary = rb_ary_entry(lex->tokens, command_pos);
-    if (TYPE(command_ary) != T_ARRAY) { return 0; }
-    if (RARRAY_LEN(command_ary) < 2) { return 0; }
+    command_token = rb_ary_entry(lex->tokens, command_pos);
+    if (TYPE(command_token) != T_STRUCT) { return 0; }
 
-    command = rb_ary_entry(command_ary, 1);
+    command = TOKEN_VALUE(command_token);
     if (TYPE(command) != T_STRING) { return 0; }
 
     StringValue(command);
@@ -89,7 +95,7 @@ int is_banner_begin(LexInfo *lex) {
     if (banner_pos < 0) { return 0; }
 
     banner_ary = rb_ary_entry(lex->tokens, banner_pos);
-    banner = rb_ary_entry(banner_ary, 1);
+    banner = TOKEN_VALUE(banner_ary);
     if (TYPE(banner) != T_STRING) { return 0; }
 
     StringValue(banner);
@@ -148,6 +154,14 @@ static void deallocate(void * lex) {
     xfree(lex);
 }
 
+static VALUE make_token(LexInfo *lex, VALUE tok) {
+    return rb_struct_new(rb_cToken,
+                         tok,
+                         rb_int_new(lex->token_start),
+                         rb_int_new(lex->line),
+                         rb_int_new(lex->token_start - lex->start_of_line + 1));
+}
+
 static void mark(void *ptr) {
     LexInfo *lex = (LexInfo *)ptr;
     rb_gc_mark(lex->tokens);
@@ -164,6 +178,9 @@ static VALUE initialize(VALUE self, VALUE input_text) {
 
     lex->text = NULL;
     lex->pos = 0;
+    lex->line = 1;
+    lex->start_of_line = 0;
+    lex->token_line = 0;
     lex->token_start = 0;
     lex->token_length = 0;
     lex->token_state = LEX_STATE_ROOT;
@@ -180,6 +197,22 @@ static void process_root(LexInfo * lex);
 static void process_start_of_line(LexInfo * lex);
 static void start_banner(LexInfo * lex);
 
+static void find_start_of_line(LexInfo *lex, size_t from) {
+    size_t pos = from;
+
+    for (;;) {
+        if (IS_NEWLINE(lex->text[pos])) {
+            lex->start_of_line = pos + 1;
+            return;
+        } else if (pos <= 0) {
+            lex->start_of_line = 0;
+            return;
+        } else {
+            pos--;
+        }
+    }
+}
+
 static void process_newline(LexInfo *lex) {
     delimit(lex);
 
@@ -189,6 +222,8 @@ static void process_newline(LexInfo *lex) {
       lex->pos = lex->pos + 1;
       lex->token_start = lex->pos;
       lex->token_length = 0;
+      lex->token_line = 0;
+      lex->line = lex->line + 1;
       return;
     }
 
@@ -196,6 +231,7 @@ static void process_newline(LexInfo *lex) {
     ADD_TOKEN(lex, ID2SYM(rb_intern("EOL")));
     lex->token_state = LEX_STATE_INDENT;
     lex->indent = 0;
+    lex->line = lex->line + 1;
 }
 
 static void process_space(LexInfo *lex) {
@@ -209,6 +245,7 @@ static void process_comment(LexInfo *lex) {
         delimit(lex);
         lex->token_state = LEX_STATE_INDENT;
         lex->indent = 0;
+        lex->line = lex->line + 1;
     }
 }
 
@@ -269,7 +306,7 @@ static void process_integer(LexInfo *lex) {
 }
 
 static void process_certificate(LexInfo *lex) {
-    char quit[5];
+    char quit[6] = "quit\n";
 
     strncpy(quit, &CURRENT_CHAR(lex) - 5, 5);
 
@@ -295,17 +332,31 @@ static void process_certificate(LexInfo *lex) {
         lex->token_length = 0;
 
         lex->token_start = lex->pos;
+        lex->line = lex->line + lex->token_line - 1;
+        find_start_of_line(lex, lex->pos);
         ADD_TOKEN(lex, ID2SYM(rb_intern("CERTIFICATE_END")));
 
-        process_newline(lex);
+        find_start_of_line(lex, lex->pos - 2);
+        lex->start_of_line++;
+        lex->token_start = lex->pos;
+        ADD_TOKEN(lex, ID2SYM(rb_intern("EOL")));
+
+        lex->token_state = LEX_STATE_INDENT;
+        lex->indent = 0;
+        lex->line = lex->line + 1;
+
         process_start_of_line(lex);
     } else {
+        if (IS_NEWLINE(CURRENT_CHAR(lex))) {
+            lex->token_line++;
+        }
         lex->token_length++;
     }
 }
 
 static void start_certificate(LexInfo *lex) {
     lex->indent_pos--;
+    lex->token_line = 0;
     rb_ary_pop(lex->tokens);
     rb_ary_pop(lex->tokens);
     ADD_TOKEN(lex, ID2SYM(rb_intern("CERTIFICATE_BEGIN")));
@@ -331,15 +382,22 @@ static void process_banner(LexInfo *lex) {
         lex->token_length++;
         delimit(lex);
         lex->token_start = lex->pos;
+        lex->line = lex->line + lex->token_line;
+        find_start_of_line(lex, lex->pos);
         ADD_TOKEN(lex, ID2SYM(rb_intern("BANNER_END")));
         if (lex->text[lex->pos + 1] == 'C') { lex->pos++; }
     } else if (!lex->banner_delimiter && is_banner_end_string(lex)) {
         lex->token_length -= 1;
         delimit(lex);
         lex->token_start = lex->pos;
+        lex->line = lex->line + lex->token_line;
+        find_start_of_line(lex, lex->pos);
         ADD_TOKEN(lex, ID2SYM(rb_intern("BANNER_END")));
     } else {
-        lex->token_length++;
+      if (IS_NEWLINE(lex->text[lex->pos + lex->token_length])) {
+        lex->token_line++;
+      }
+      lex->token_length++;
     }
 }
 
@@ -347,11 +405,16 @@ static void start_banner(LexInfo *lex) {
     char c = CURRENT_CHAR(lex);
     lex->banner_delimiter = (c == '\n') ? 0 : c;
     ADD_TOKEN(lex, ID2SYM(rb_intern("BANNER_BEGIN")));
+    if ('\n' == lex->text[lex->pos + 1]) lex->line++;
     if ('\n' == lex->text[lex->pos + 2]) lex->pos++;
 }
 
 static void process_start_of_line(LexInfo *lex) {
     char c = CURRENT_CHAR(lex);
+
+    if (lex->indent == 0) {
+        lex->start_of_line = lex->pos;
+    }
 
     if (IS_SPACE(c)) {
         lex->indent++;
@@ -487,7 +550,8 @@ static VALUE call(VALUE self, VALUE input_text) {
     }
 
     delimit(lex);
-    lex->token_start = lex->pos;
+    lex->token_start = lex->pos - 1;
+    lex->line = lex->line - 1;
 
     for (; lex->indent_pos > 0; lex->indent_pos--) {
         ADD_TOKEN(lex, ID2SYM(rb_intern("DEDENT")));
@@ -501,6 +565,7 @@ void Init_c_lexer() {
     rb_cCLexer = rb_define_class_under(rb_mIOSParser, "CLexer", rb_cObject);
     rb_eLexError = rb_define_class_under(rb_mIOSParser, "LexError",
                                          rb_eStandardError);
+    rb_cToken = rb_path2class("IOSParser::Token");
     rb_define_alloc_func(rb_cCLexer, allocate);
     rb_define_method(rb_cCLexer, "initialize", initialize, 0);
     rb_define_method(rb_cCLexer, "call", call, 1);

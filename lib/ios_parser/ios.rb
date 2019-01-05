@@ -11,6 +11,7 @@ module IOSParser
       @document = Document.new(nil)
       @parent = parent
       @lexer  = lexer
+      @indent = 0
     end
 
     def tokens
@@ -29,20 +30,39 @@ module IOSParser
 
     def section(parent = nil)
       [].tap do |commands|
-        until tokens.empty? || tokens.first.last == :DEDENT
+        until tokens.empty? || tokens.first.value == :DEDENT
           commands.push(command(parent, @document))
         end
-        tokens.shift # discard :DEDENT
+        token = tokens.shift # discard :DEDENT
+        @indent -= 1 if token && token.value == :DEDENT
       end
     end
 
     def command(parent = nil, document = nil)
-      pos = tokens.first.first
-      opts = { args: arguments, parent: parent, document: document, pos: pos }
+      opts = {
+        tokens: command_tokens,
+        parent: parent,
+        document: document,
+        indent: @indent
+      }
 
       Command.new(opts).tap do |cmd|
         cmd.commands = subsections(cmd)
       end
+    end
+
+    def command_tokens
+      toks = []
+      until tokens.empty? || tokens.first.value == :EOL
+        tok = tokens.shift
+        toks << tok unless argument_to_discard?(tok.value)
+      end
+      tokens.shift # discard :EOL
+      toks
+    end
+
+    def argument_to_discard?(arg)
+      arguments_to_discard.include?(arg)
     end
 
     def arguments_to_discard
@@ -51,18 +71,9 @@ module IOSParser
        :BANNER_BEGIN, :BANNER_END]
     end
 
-    def arguments
-      [].tap do |args|
-        until tokens.empty? || tokens.first.last == :EOL
-          _, arg = tokens.shift
-          args << arg unless arguments_to_discard.include?(arg)
-        end
-        tokens.shift # discard :EOL
-      end
-    end
-
     def subsections(parent = nil)
-      if !tokens.empty? && tokens.first.last == :INDENT
+      if !tokens.empty? && tokens.first.value == :INDENT
+        @indent += 1
         tokens.shift # discard :INDENT
         section(parent)
       else

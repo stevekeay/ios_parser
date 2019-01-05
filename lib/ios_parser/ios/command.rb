@@ -6,19 +6,22 @@ module IOSParser
     class Command
       include Enumerable
       include Queryable
-      attr_accessor :args, :commands, :parent, :pos, :document
-
-      def initialize(args: [], commands: [],
-                     parent: nil, pos: nil, document: nil)
-        @args = args
+      attr_accessor :commands, :parent, :document, :indent, :tokens
+      def initialize(tokens: [], commands: [],
+                     parent: nil, document: nil, indent: nil)
+        @tokens = tokens
         @commands = commands
         @parent = parent
-        @pos = pos
         @document = document
+        @indent = indent || 0
+      end
+
+      def args
+        tokens.map(&:value)
       end
 
       def name
-        args[0]
+        tokens.first.value
       end
 
       def ==(other)
@@ -37,6 +40,10 @@ module IOSParser
         parent ? parent.path + [parent.line] : []
       end
 
+      def pos
+        tokens.first && tokens.first.pos
+      end
+
       def indentation(base: 0)
         ' ' * (path.length - base)
       end
@@ -48,9 +55,10 @@ module IOSParser
 
       def inspect
         "<IOSParser::IOS::Command:0x#{object_id.to_s(16)} "\
-        "@args=#{args.inspect}, "\
+        "@tokens=#{tokens.inspect}, "\
         "@commands=#{commands.inspect}, "\
         "@pos=#{pos.inspect}, "\
+        "@indent=#{indent}, "\
         "@document=<IOSParser::IOS::Document:0x#{document.object_id.to_s(16)}>>"
       end
 
@@ -63,7 +71,8 @@ module IOSParser
         {
           args: args,
           commands: commands.map(&:to_hash),
-          pos: pos
+          pos: pos,
+          indent: indent
         }
       end
 

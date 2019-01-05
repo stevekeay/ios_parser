@@ -25,22 +25,26 @@ module IOSParser
                     commands: [{ args: ['police', 300_000_000, 1_000_000,
                                         'exceed-action',
                                         'policed-dscp-transmit'],
-                                 commands: [{ args: %w[set dscp cs1],
-                                              commands: [], pos: 114 }],
-                                 pos: 50 }],
-                    pos: 24 },
+                                 commands: [
+                                   { args: %w[set dscp cs1],
+                                     commands: [], pos: 114, indent: 3 }
+                                 ],
+                                 pos: 50, indent: 2 }],
+                    pos: 24, indent: 1 },
 
                   { args: %w[class other_service],
                     commands: [{ args: ['police', 600_000_000, 1_000_000,
                                         'exceed-action',
                                         'policed-dscp-transmit'],
-                                 commands: [{ args: %w[set dscp cs2],
-                                              commands: [], pos: 214 },
-                                            { args: ['command_with_no_args'],
-                                              commands: [], pos: 230 }],
-                                 pos: 150 }],
-                    pos: 128 }],
-               pos: 0 }]
+                                 commands: [
+                                   { args: %w[set dscp cs2],
+                                     commands: [], pos: 214, indent: 3 },
+                                   { args: ['command_with_no_args'],
+                                     commands: [], pos: 230, indent: 3 }
+                                 ],
+                                 pos: 150, indent: 2 }],
+                    pos: 128, indent: 1 }],
+               pos: 0, indent: 0 }]
         }
       end
 
@@ -59,9 +63,9 @@ module IOSParser
         it('can be searched by an exact command') do
           expect(subject.find_all(name: 'set').map(&:to_hash))
             .to eq [{ args: %w[set dscp cs1],
-                      commands: [], pos: 114 },
+                      commands: [], pos: 114, indent: 3 },
                     { args: %w[set dscp cs2],
-                      commands: [], pos: 214 }]
+                      commands: [], pos: 214, indent: 3 }]
         end
 
         context 'can be searched by name and the first argument' do
@@ -92,8 +96,8 @@ module IOSParser
               [{ args: ['police', 300_000_000, 1_000_000, 'exceed-action',
                         'policed-dscp-transmit'],
                  commands: [{ args: %w[set dscp cs1],
-                              commands: [], pos: 114 }],
-                 pos: 50 }]
+                              commands: [], pos: 114, indent: 3 }],
+                 pos: 50, indent: 2 }]
             end
 
             context 'integer query' do
@@ -115,7 +119,7 @@ module IOSParser
                     .find('set')
                     .to_hash)
               .to eq(args: %w[set dscp cs1],
-                     commands: [], pos: 114)
+                     commands: [], pos: 114, indent: 3)
           end
         end # context 'nested search'
 
@@ -252,15 +256,15 @@ module IOSParser
         cmd_ary = [
           { args: ['ip', 'route', '10.0.0.1', '255.255.255.255',
                    'Null0'],
-            commands: [], pos: 0 },
+            commands: [], pos: 0, indent: 0 },
           { args: ['ip', 'route', '9.9.9.199', '255.255.255.255',
                    '42.42.42.142', 'name', 'PONIES'],
-            commands: [], pos: 40 },
+            commands: [], pos: 40, indent: 0 },
           { args: ['ip', 'route', 'vrf', 'Mgmt-intf', '0.0.0.0',
                    '0.0.0.0', '9.9.9.199'],
-            commands: [], pos: 100 },
+            commands: [], pos: 100, indent: 0 },
           { args: ['ip', 'route', '0.0.0.0/0', '11.11.0.111', 120],
-            commands: [], pos: 149 }
+            commands: [], pos: 149, indent: 0 }
         ]
 
         expect(result.find_all('ip route').map(&:to_hash)).to eq(cmd_ary)
@@ -269,7 +273,7 @@ module IOSParser
 
         cmd_hash = { args: ['ip', 'route', '9.9.9.199', '255.255.255.255',
                             '42.42.42.142', 'name', 'PONIES'],
-                     commands: [], pos: 40 }
+                     commands: [], pos: 40, indent: 0 }
         expect(result.find('ip route 9.9.9.199').to_hash).to eq(cmd_hash)
       end # end context '#call'
 
