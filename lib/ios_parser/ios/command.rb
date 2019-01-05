@@ -6,16 +6,19 @@ module IOSParser
     class Command
       include Enumerable
       include Queryable
-      attr_accessor :args, :commands, :parent, :pos, :document
+      attr_accessor :args, :commands, :parent, :pos, :document, :indent
 
+      # rubocop: disable ParameterLists
       def initialize(args: [], commands: [],
-                     parent: nil, pos: nil, document: nil)
+                     parent: nil, pos: nil, document: nil, indent: nil)
         @args = args
         @commands = commands
         @parent = parent
         @pos = pos
         @document = document
+        @indent = indent || 0
       end
+      # rubocop: enable ParameterLists
 
       def name
         args[0]
@@ -51,6 +54,7 @@ module IOSParser
         "@args=#{args.inspect}, "\
         "@commands=#{commands.inspect}, "\
         "@pos=#{pos.inspect}, "\
+        "@indent=#{indent}, "\
         "@document=<IOSParser::IOS::Document:0x#{document.object_id.to_s(16)}>>"
       end
 
@@ -63,7 +67,8 @@ module IOSParser
         {
           args: args,
           commands: commands.map(&:to_hash),
-          pos: pos
+          pos: pos,
+          indent: indent
         }
       end
 

@@ -11,6 +11,7 @@ module IOSParser
       @document = Document.new(nil)
       @parent = parent
       @lexer  = lexer
+      @indent = 0
     end
 
     def tokens
@@ -32,18 +33,28 @@ module IOSParser
         until tokens.empty? || tokens.first.value == :DEDENT
           commands.push(command(parent, @document))
         end
-        tokens.shift # discard :DEDENT
+        token = tokens.shift # discard :DEDENT
+        @indent -= 1 if token && token.value == :DEDENT
       end
     end
 
+    # rubocop: disable MethodLength
     def command(parent = nil, document = nil)
       pos = tokens.first.pos
-      opts = { args: arguments, parent: parent, document: document, pos: pos }
+
+      opts = {
+        args: arguments,
+        parent: parent,
+        document: document,
+        pos: pos,
+        indent: @indent
+      }
 
       Command.new(opts).tap do |cmd|
         cmd.commands = subsections(cmd)
       end
     end
+    # rubocop: enable MethodLength
 
     def argument_to_discard?(arg)
       arguments_to_discard.include?(arg)
@@ -67,6 +78,7 @@ module IOSParser
 
     def subsections(parent = nil)
       if !tokens.empty? && tokens.first.value == :INDENT
+        @indent += 1
         tokens.shift # discard :INDENT
         section(parent)
       else

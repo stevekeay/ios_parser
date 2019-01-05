@@ -24,22 +24,26 @@ describe IOSParser do
                     commands: [{ args: ['police', 300_000_000, 1_000_000,
                                         'exceed-action',
                                         'policed-dscp-transmit'],
-                                 commands: [{ args: %w[set dscp cs1],
-                                              commands: [], pos: 114 }],
-                                 pos: 50 }],
-                    pos: 24 },
+                                 commands: [
+                                   { args: %w[set dscp cs1],
+                                     commands: [], pos: 114, indent: 3 }
+                                 ],
+                                 pos: 50, indent: 2 }],
+                    pos: 24, indent: 1 },
 
                   { args: %w[class other_service],
                     commands: [{ args: ['police', 600_000_000, 1_000_000,
                                         'exceed-action',
                                         'policed-dscp-transmit'],
-                                 commands: [{ args: %w[set dscp cs2],
-                                              commands: [], pos: 214 },
-                                            { args: ['command_with_no_args'],
-                                              commands: [], pos: 230 }],
-                                 pos: 150 }],
-                    pos: 128 }],
-               pos: 0 }]
+                                 commands: [
+                                   { args: %w[set dscp cs2],
+                                     commands: [], pos: 214, indent: 3 },
+                                   { args: ['command_with_no_args'],
+                                     commands: [], pos: 230, indent: 3 }
+                                 ],
+                                 pos: 150, indent: 2 }],
+                    pos: 128, indent: 1 }],
+               pos: 0, indent: 0 }]
         }
       end
 
@@ -70,15 +74,18 @@ describe IOSParser do
                   {
                     args: %w[description blah blah blah],
                     commands: [],
-                    pos: 29
+                    pos: 29,
+                    indent: 1
                   },
                   {
                     args: ['match', 'access-group', 'fred'],
                     commands: [],
-                    pos: 57
+                    pos: 57,
+                    indent: 1
                   }
                 ],
-                pos: 0
+                pos: 0,
+                indent: 0
               }
             ]
         }
