@@ -240,6 +240,17 @@ static void process_space(LexInfo *lex) {
 
 static void process_comment(LexInfo *lex) {
     char c = CURRENT_CHAR(lex);
+    int token_count = RARRAY_LEN(lex->tokens);
+    VALUE last_token, last_value;
+
+    if (0 < token_count) {
+      last_token = rb_ary_entry(lex->tokens, token_count - 1);
+      last_value = TOKEN_VALUE(last_token);
+
+      if (TYPE(last_value) != T_SYMBOL) {
+        ADD_TOKEN(lex, ID2SYM(rb_intern("EOL")));
+      }
+    }
 
     if (IS_NEWLINE(c)) {
         delimit(lex);
