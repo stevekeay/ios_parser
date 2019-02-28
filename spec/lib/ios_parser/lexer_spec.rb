@@ -137,6 +137,29 @@ END
         it { expect(subject_pure.map(&:value)).to eq output }
       end
 
+      context 'aaa authentication banner' do
+        let(:input) { <<END.unindent }
+        aaa authentication banner ^C
+        xyz
+        ^C
+        aaa blah
+END
+
+        let(:output) do
+          ['aaa', 'authentication', 'banner',
+           :BANNER_BEGIN, "xyz\n", :BANNER_END, :EOL,
+           'aaa', 'blah', :EOL]
+        end
+
+        it 'lexes (c lexer)' do
+          expect(subject.map(&:value)).to eq output
+        end
+
+        it 'lexes (ruby lexer)' do
+          expect(subject_pure.map(&:value)).to eq output
+        end
+      end
+
       context 'decimal number' do
         let(:input) { 'boson levels at 93.2' }
         let(:output) { ['boson', 'levels', 'at', 93.2] }

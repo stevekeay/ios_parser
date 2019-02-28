@@ -113,7 +113,10 @@ module IOSParser
     end
 
     def banner_begin?
-      tokens[-2] && tokens[-2].value == 'banner'
+      tokens[-2] && (
+        tokens[-2].value == 'banner' ||
+        tokens[-2..-1].map(&:value) == %w[authentication banner]
+      )
     end
 
     def banner

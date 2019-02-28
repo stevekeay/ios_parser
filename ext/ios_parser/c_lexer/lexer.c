@@ -87,12 +87,41 @@ int is_certificate(LexInfo *lex) {
     return 1;
 }
 
+int is_authentication_banner_begin(LexInfo *lex) {
+    VALUE authentication_ary, authentication, banner_ary, banner;
+    int token_count = RARRAY_LEN(lex->tokens);
+    int authentication_pos = token_count -2;
+    int banner_pos = token_count - 1;
+
+    if (banner_pos < 0) { return 0; }
+
+    banner_ary = rb_ary_entry(lex->tokens, banner_pos);
+    banner = TOKEN_VALUE(banner_ary);
+    if (TYPE(banner) != T_STRING) { return 0; }
+
+    StringValue(banner);
+    if (RSTRING_LEN(banner) != CMD_LEN("banner")) { return 0; }
+    if (0 != strncmp(RSTRING_PTR(banner), "banner", 6)) { return 0; }
+
+    authentication_ary = rb_ary_entry(lex->tokens, authentication_pos);
+    authentication = TOKEN_VALUE(authentication_ary);
+    if (TYPE(authentication) != T_STRING) { return 0; }
+
+    StringValue(authentication);
+    if (RSTRING_LEN(authentication) != CMD_LEN("authentication")) { return 0; }
+    if (0 != strncmp(RSTRING_PTR(authentication), "authentication", 14)) { return 0; }
+
+    return 1;
+}
+
 int is_banner_begin(LexInfo *lex) {
     VALUE banner_ary, banner;
     int token_count = RARRAY_LEN(lex->tokens);
     int banner_pos = token_count - 2;
 
     if (banner_pos < 0) { return 0; }
+
+    if (is_authentication_banner_begin(lex)) { return 1; }
 
     banner_ary = rb_ary_entry(lex->tokens, banner_pos);
     banner = TOKEN_VALUE(banner_ary);
