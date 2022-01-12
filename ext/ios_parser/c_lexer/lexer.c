@@ -154,7 +154,7 @@ static void delimit(LexInfo *lex) {
     case (LEX_STATE_INTEGER):
         strncpy(string, &lex->text[lex->token_start], lex->token_length);
         string[lex->token_length] = '\0';
-        token = rb_int_new(atoi(string));
+        token = rb_int_new(atoll(string));
         break;
 
     case (LEX_STATE_DECIMAL):
