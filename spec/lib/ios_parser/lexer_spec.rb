@@ -379,6 +379,19 @@ END
         it { expect(subject_pure.map(&:value)).to eq output }
         it { expect(subject.map(&:value)).to eq output }
       end # context 'comment at end of line' do
+
+      context 'large integers up to 2^63-1' do
+        let(:input) do
+          "42 4200000000 9223372036854775807"
+        end
+
+        let(:output) do
+          [42, 4200000000, 9223372036854775807]
+        end
+
+        it { expect(subject_pure.map(&:value)).to eq output }
+        it { expect(subject.map(&:value)).to eq output }
+      end # context 'large integers up to 2^63-1' do
     end
   end
 end
