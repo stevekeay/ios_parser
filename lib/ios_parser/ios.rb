@@ -46,7 +46,7 @@ module IOSParser
         indent: @indent
       }
 
-      Command.new(opts).tap do |cmd|
+      Command.new(**opts).tap do |cmd|
         cmd.commands = subsections(cmd)
       end
     end

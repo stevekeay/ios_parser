@@ -64,7 +64,7 @@ module IOSParser
 
       def to_s(dedent: false)
         indent_opts = { base: dedent ? path.length : 0 }
-        map { |cmd| "#{cmd.indentation(indent_opts)}#{cmd.line}\n" }.join
+        map { |cmd| "#{cmd.indentation(**indent_opts)}#{cmd.line}\n" }.join
       end
 
       def to_hash
