@@ -3,6 +3,20 @@ require 'ios_parser'
 
 describe IOSParser do
   describe '.parse' do
+    context 'with blank line at start' do
+      it 'parses and extracts sections' do
+        parser = IOSParser.parse("\ntest config")
+        expect(parser.find_all(name: "test").count).to eq 1
+      end
+    end
+
+    context 'with blank line in middle' do
+      it 'parses and extracts sections' do
+        parser = IOSParser.parse("preamble\n\ntest config")
+        expect(parser.find_all(name: "test").count).to eq 1
+      end
+    end
+
     context 'indented region' do
       let(:input) { <<-END.unindent }
         policy-map mypolicy_in

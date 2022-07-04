@@ -21,7 +21,7 @@ module IOSParser
       end
 
       def name
-        tokens.first.value
+        tokens.first&.value
       end
 
       def ==(other)
