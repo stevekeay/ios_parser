@@ -19,6 +19,8 @@ Gem::Specification.new do |s|
     s.extensions << 'ext/ios_parser/c_lexer/extconf.rb'
   end
 
+  s.required_ruby_version = '>=2.0'
+
   s.add_development_dependency 'rake-compiler', '~>0.9'
   s.add_development_dependency 'rspec', '~>3.2'
   s.add_development_dependency 'rubocop', '~> 0.54' if RUBY_VERSION > '2.1'
