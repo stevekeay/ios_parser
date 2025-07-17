@@ -6,6 +6,8 @@ ios_parser
 
 convert switch and router config files to structured data
 
+This is a fork of the excellent https://github.com/bjmllr/ios_parser .  Errors are mine.
+
 Basic Parsing
 -------------
     require 'ios_parser'
