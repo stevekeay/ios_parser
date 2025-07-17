@@ -201,7 +201,7 @@ static VALUE allocate(VALUE klass) {
     return Data_Wrap_Struct(klass, mark, deallocate, lex);
 }
 
-static VALUE initialize(VALUE self, VALUE input_text) {
+static VALUE initialize(VALUE self) {
     LexInfo *lex;
     Data_Get_Struct(self, LexInfo, lex);
 
